@@ -16,6 +16,7 @@ from ..core.readiness_registry import get_readiness_registry
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
 from ..services.cache import CacheService, get_cache
+from ..runtime.temporal_oracle import default_oracle
 from ..services.tradier_client import ProviderHTTPError, get_tradier_client
 
 
@@ -557,21 +558,28 @@ async def get_historical_data(
     # Get settings for cache TTL
     settings = get_settings()
 
-    # Parse dates or use defaults
+    # Parse dates or use defaults, then apply anti-look-ahead guard using TemporalOracle
     try:
         if end:
-            end_date = datetime.strptime(end, "%Y-%m-%d")
+            end_dt = datetime.strptime(end, "%Y-%m-%d")
+            end_date = datetime(end_dt.year, end_dt.month, end_dt.day, tzinfo=UTC)
         else:
             end_date = datetime.now(UTC)
 
         if start:
-            start_date = datetime.strptime(start, "%Y-%m-%d")
+            start_dt = datetime.strptime(start, "%Y-%m-%d")
+            start_date = datetime(start_dt.year, start_dt.month, start_dt.day, tzinfo=UTC)
         else:
             start_date = end_date - timedelta(days=30)  # Default to 30 days
     except ValueError as e:
         raise HTTPException(
             status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {e!s}"
         ) from e
+
+    # Enforce anti-look-ahead: clamp end_date to simulation time
+    sim_time = default_oracle.get_sim_time()
+    if end_date.replace(tzinfo=UTC) > sim_time:
+        end_date = sim_time
 
     # Create cache key
     cache_key = f"historical:{symbol.upper()}:{timeframe}:{start_date.strftime('%Y-%m-%d')}:{end_date.strftime('%Y-%m-%d')}"
@@ -610,9 +618,25 @@ async def get_historical_data(
         # Transform to frontend format
         result_bars = []
         for bar in bars_data:
+            ts_str = bar.get("date") or bar.get("time", "")
+            try:
+                # Accept YYYY-MM-DD or ISO
+                if len(ts_str) == 10:
+                    tmp = datetime.strptime(ts_str, "%Y-%m-%d")
+                    ts = datetime(tmp.year, tmp.month, tmp.day, tzinfo=UTC)
+                else:
+                    ts = datetime.fromisoformat(ts_str).astimezone(UTC)
+            except Exception as e:
+                logger.warning(f"Skipping bar with unparsable timestamp: {ts_str!r} ({e!s})")
+                continue
+
+            # Skip any future bars relative to sim time (anti-look-ahead)
+            if ts > sim_time:
+                continue
+
             result_bars.append(
                 {
-                    "timestamp": bar.get("date") or bar.get("time", ""),
+                    "timestamp": ts_str,
                     "open": float(bar.get("open", 0)),
                     "high": float(bar.get("high", 0)),
                     "low": float(bar.get("low", 0)),
