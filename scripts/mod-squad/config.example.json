@@ -1,0 +1,20 @@
+{
+  "batches": [
+    {
+      "name": "Streaming Hardening Smoke",
+      "steps": [
+        { "type": "http", "name": "Backend health", "method": "GET", "url": "http://127.0.0.1:8011/health" },
+        { "type": "noop", "name": "WS heartbeat simulation" }
+      ]
+    },
+    {
+      "name": "Replay Gate Check",
+      "steps": [
+        { "type": "noop", "name": "Temporal Oracle assertions (placeholder)" },
+        { "type": "noop", "name": "Time-gated news check (placeholder)" }
+      ]
+    }
+  ]
+}
+
+
