@@ -102,6 +102,9 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { HelpProvider, useHelp } from "../hooks/useHelp";
 import { initializeSession } from "../lib/userManagement";
+import LiveStatusChip from "../components/common/LiveStatusChip";
+import SimTimeBadge from "../components/common/SimTimeBadge";
+import StaleDataBanner from "../components/common/StaleDataBanner";
 
 export default function Dashboard() {
   // Development bypass: Skip onboarding in development mode
@@ -114,6 +117,8 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [tradingMode, setTradingMode] = useState<"paper" | "live">("paper");
+  const [lastUpdatedMs, setLastUpdatedMs] = useState<number>(Date.now());
+  const [liveStatus] = useState<"live" | "reconnecting" | "stale">("live");
 
   // Help system
   const { isHelpPanelOpen, openHelpPanel, closeHelpPanel } = useHelp();
@@ -133,6 +138,12 @@ export default function Dashboard() {
 
     setIsUserSetup(setupComplete);
     setIsLoading(false);
+  }, []);
+
+  // Lightweight timer to refresh the lastUpdated timestamp (placeholder until real stream wiring)
+  useEffect(() => {
+    const t = setInterval(() => setLastUpdatedMs(Date.now()), 10000);
+    return () => clearInterval(t);
   }, []);
 
   // Owner bypass keyboard combo (Ctrl+Shift+A or Cmd+Shift+A)
@@ -272,6 +283,10 @@ export default function Dashboard() {
             animation: "slideUp 0.4s ease-out",
           }}
         >
+          {/* Stale data banner (appears if updates exceed threshold) */}
+          <div style={{ position: "absolute", top: ENABLE_DEV_BYPASS ? 48 : 8, left: 8, right: 8, zIndex: 20 }}>
+            <StaleDataBanner lastUpdatedMs={lastUpdatedMs} />
+          </div>
           <h4
             style={{
               color: displayWorkflow.color,
@@ -470,8 +485,13 @@ export default function Dashboard() {
               gap: isMobile ? "8px" : "0",
             }}
           >
-            {/* Empty left space for symmetry - hide on mobile */}
-            {!isMobile && <div></div>}
+            {/* Status area (left) */}
+            {!isMobile && (
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <LiveStatusChip status={liveStatus} lastUpdatedMs={lastUpdatedMs} />
+                <SimTimeBadge simTime={new Date()} mode="live" />
+              </div>
+            )}
 
             {/* Keyboard Hints - hide on mobile (touch devices don't use keyboard) */}
             {!isMobile && (
