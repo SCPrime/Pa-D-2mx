@@ -3,7 +3,12 @@
     {
       "name": "Streaming Hardening Smoke",
       "steps": [
-        { "type": "http", "name": "Backend health", "method": "GET", "url": "http://127.0.0.1:8011/health" },
+        {
+          "type": "http",
+          "name": "Backend health",
+          "method": "GET",
+          "url": "http://127.0.0.1:8011/api/health"
+        },
         { "type": "noop", "name": "WS heartbeat simulation" }
       ]
     },
@@ -16,5 +21,3 @@
     }
   ]
 }
-
-
