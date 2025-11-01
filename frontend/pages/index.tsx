@@ -1,3 +1,12 @@
+/**
+ * PaiiD-2mx Trading Platform
+ * Copyright © 2025 Dr. SC Prime. All Rights Reserved.
+ * 
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, modification, or distribution is strictly prohibited.
+ * 🚨 THIS CODE IS MONITORED: Violators WILL be found.
+ */
+
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import Split from "react-split";
@@ -6,7 +15,6 @@ import { logger } from "../lib/logger";
 import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
 import ExecuteTradeForm from "../components/ExecuteTradeForm";
-import MobileDashboard from "../components/MobileDashboard";
 import Settings from "../components/Settings";
 import UserSetupAI from "../components/UserSetupAI";
 
@@ -97,14 +105,14 @@ import HelpPanel from "../components/HelpPanel";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import MarketScanner from "../components/MarketScanner";
 import TradingModeIndicator from "../components/TradingModeIndicator";
+import LiveStatusChip from "../components/common/LiveStatusChip";
+import SimTimeBadge from "../components/common/SimTimeBadge";
+import StaleDataBanner from "../components/common/StaleDataBanner";
 import RiskCalculator from "../components/trading/RiskCalculator";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import { useIsMobile } from "../hooks/useBreakpoint";
 import { HelpProvider, useHelp } from "../hooks/useHelp";
 import { initializeSession } from "../lib/userManagement";
-import LiveStatusChip from "../components/common/LiveStatusChip";
-import SimTimeBadge from "../components/common/SimTimeBadge";
-import StaleDataBanner from "../components/common/StaleDataBanner";
 
 export default function Dashboard() {
   // Development bypass: Skip onboarding in development mode

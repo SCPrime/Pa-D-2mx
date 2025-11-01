@@ -64,5 +64,3 @@ def make_run_logger(run_id: str, kind: str = "log") -> JSONLLogger:
         # default: generic log.jsonl
         path = base / "log.jsonl"
     return JSONLLogger(path)
-
-

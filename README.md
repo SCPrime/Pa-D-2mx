@@ -1,4 +1,16 @@
-# 🚀 PaiiD Trading Platform
+# 🚀 PaiiD-2mx Trading Platform
+
+## ⚠️ PROPRIETARY AND CONFIDENTIAL
+
+**Copyright © 2025 Dr. SC Prime - PaiiD-2mx Trading Platform. All Rights Reserved.**
+
+This repository contains proprietary and confidential information. Unauthorized copying, modification, or distribution is strictly prohibited and will be prosecuted to the fullest extent of the law.
+
+🚨 **THIS CODE IS MONITORED:** We employ advanced fingerprinting and tracking systems to detect unauthorized use. Violators WILL be found.
+
+For licensing inquiries: contact@paiid.com
+
+---
 
 **Personal Artificial Intelligence Investment Dashboard** - A full-stack AI-powered trading platform with an intuitive 10-stage radial workflow interface, real-time market data, and intelligent trade execution.
 
@@ -24,6 +36,8 @@
 - **Paper Trading** - Risk-free strategy testing
 - **Options Trading** - Greeks calculation and volatility analysis
 - **Portfolio Management** - Position tracking and P&L monitoring
+- **Modular Market Packs** - Hot-swap between stock/options and DEX meme coin engines
+- **Execution Audit Trail** - `/api/strategies/execution-history` surfaces recent automation runs
 
 ### 🎨 **Enterprise UX**
 - **Radial Workflow Interface** - Intuitive 10-stage trading process
@@ -146,6 +160,7 @@
 - **Broker Integration**: Alpaca Trading API
 - **Deployment**: Render
 - **Endpoints**: RESTful API with `/api/proxy` reverse proxy
+- **Market Modules**: Strategy registry supports `stocks_options` and `dex_meme_coins`
 
 ### API Proxy Pattern
 Frontend routes all backend requests through `/api/proxy/[...path]` to avoid CORS issues:
@@ -204,6 +219,21 @@ python -m uvicorn main:app --reload --port 8000
 
 Backend runs at http://localhost:8000
 
+#### Local Infrastructure (Database + Cache)
+
+```bash
+docker compose -f infrastructure/docker-compose.dev.yml up -d
+```
+
+- PostgreSQL: `postgresql://paiid:paiid@localhost:5433/paiid`
+- Redis: `redis://localhost:6380/0`
+
+Stop services when finished:
+
+```bash
+docker compose -f infrastructure/docker-compose.dev.yml down
+```
+
 ### Environment Variables
 
 **Frontend** (`.env.local`):
@@ -213,9 +243,17 @@ Backend runs at http://localhost:8000
 
 **Backend** (`.env`):
 ```env
+DATABASE_URL=postgresql://paiid:paiid@localhost:5433/paiid
+REDIS_URL=redis://localhost:6380/0
 ALPACA_API_KEY=your_api_key_here
 ALPACA_SECRET_KEY=your_secret_key_here
 ALPACA_BASE_URL=https://paper-api.alpaca.markets  # or live
+# DEX wallet routing (optional for meme coin strategies)
+DEX_RPC_URL=https://polygon-mainnet.infura.io/v3/your-key
+DEX_WALLET_ADDRESS=0xYourWalletAddress
+DEX_ROUTER_CONTRACT=uniswapV3
+DEX_CHAIN_ID=137
+DEX_SLIPPAGE_BPS=75
 ```
 
 ## 📁 Project Structure
@@ -365,6 +403,7 @@ PaiiD/
 - Use Alpaca Paper Trading API for development
 - Production deployment uses environment variables on Render
 - Content Security Policy (CSP) headers prevent iframe injection
+- Refer to `LOCKED_ARTIFACTS.md` for LOCKED FINAL files shared across PaiiD repos
 
 ## 🎯 Next Steps
 

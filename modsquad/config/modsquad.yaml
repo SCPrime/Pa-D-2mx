@@ -1,0 +1,169 @@
+version: 1
+modsquad:
+  enabled: true
+  mode: non_interfering
+  conductor:
+    default_priority: balanced
+    allow_parallel_batches: false
+  maintenance:
+    config_path: ./maintenance_schedule.yaml
+  quality_gates:
+    config_path: ./quality_gates.yaml
+  extensions:
+    config_path: ./extensions.yaml
+    dispatch_mode: sequential
+
+models:
+  deepseek-coder:
+    provider: cursor
+    model_id: deepseek-coder:latest
+    description: Primary code generation + refactor specialist (DeepSeek Coder)
+    strengths:
+      - code_generation
+      - testing
+      - refactoring
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1100
+  deepseek-r1:
+    provider: cursor
+    model_id: deepseek-r1-0528
+    description: Architectural reasoning, logic validation, guard checks (DeepSeek R1)
+    strengths:
+      - architecture
+      - error_analysis
+      - security_review
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 2400
+  deepseek-v3:
+    provider: cursor
+    model_id: deepseek-v3.1
+    description: Market research, natural language synthesis, cross-checking
+    strengths:
+      - market_analysis
+      - research
+      - summarization
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1600
+  deepseek-math:
+    provider: cursor
+    model_id: deepseek-math:latest
+    description: Quantitative analysis and technical indicator derivations (DeepSeek Math)
+    strengths:
+      - quantitative_reasoning
+      - risk_modeling
+      - statistical_validation
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1500
+  llama3-70b:
+    provider: cursor
+    model_id: llama3.1-70b
+    description: Long-context architectural reasoning and cross-checking (Meta Llama 3.1 70B)
+    strengths:
+      - architecture
+      - long_context_analysis
+      - compliance_review
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 2100
+  mistral-nemo:
+    provider: cursor
+    model_id: mistral-nemo
+    description: Fast refactor assistant and secondary reviewer (Mistral Nemo)
+    strengths:
+      - refactoring
+      - linting
+      - secondary_review
+    access_notes: Enabled inside Cursor model list
+    latency_ms: 1200
+  claude-4.5-sonnet:
+    provider: anthropic
+    env_key: ANTHROPIC_API_KEY
+    description: Documentation, long-form reasoning, UX copy
+    strengths:
+      - documentation
+      - product_brief
+      - design_review
+    latency_ms: 3400
+  claude-4.5-haiku:
+    provider: anthropic
+    env_key: ANTHROPIC_API_KEY
+    description: Fast summaries and maintenance reports
+    strengths:
+      - summarization
+      - maintenance_reports
+      - change_logs
+    latency_ms: 1100
+  gpt-5-codex-high:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-5-codex-high
+    description: Cloud fallback for complex code tasks (Codex successor)
+    strengths:
+      - code_generation
+      - language_mix
+      - type_inference
+    latency_ms: 1900
+  gpt-5:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-5
+    description: General chat + brainstorming assistant
+    strengths:
+      - ideation
+      - brainstorming
+      - requirements_extraction
+    latency_ms: 1700
+  gpt-5-pro:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-5-pro
+    description: High-context executive reasoning and compliance checks
+    strengths:
+      - governance
+      - executive_summary
+      - compliance_review
+    latency_ms: 2300
+  gpt-4.1-mini:
+    provider: openai
+    env_key: OPENAI_API_KEY
+    model_id: gpt-4.1-mini
+    description: Low-latency regression testing and quick validation passes
+    strengths:
+      - smoke_testing
+      - linting
+      - lightweight_planning
+    latency_ms: 900
+
+budgets:
+  daily_usd: 25
+  monthly_usd: 150
+  alert_threshold_percent: 80
+  auto_stop: true
+
+analytics:
+  enabled: true
+  history_days: 90
+  emit_jsonl: true
+  jsonl_path: ../logs/run-history
+
+logging:
+  level: INFO
+  redact:
+    - api_key
+    - secret
+    - password
+
+markets:
+  default: stocks_options
+  modules:
+    stocks_options:
+      description: Equities and options strategies (paper/live)
+      repo: backend/app/markets/modules/stocks_options.py
+    dex_meme_coins:
+      description: DEX meme coin reconnaissance (paper)
+      repo: backend/app/markets/modules/dex_meme_coins.py
+
+fallbacks:
+  order:
+    - deepseek-coder
+    - gpt-5-codex-high
+    - claude-4.5-sonnet

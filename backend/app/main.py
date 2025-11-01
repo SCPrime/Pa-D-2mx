@@ -1,3 +1,12 @@
+"""
+PaiiD-2mx Trading Platform
+Copyright © 2025 Dr. SC Prime. All Rights Reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+Unauthorized copying, modification, or distribution is strictly prohibited.
+🚨 THIS CODE IS MONITORED: Violators WILL be found.
+"""
+
 import os
 import sys
 import time
@@ -21,14 +30,14 @@ print("Deployed from: main branch - Tradier integration active")
 print("===========================\n", flush=True)
 
 
-import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi.errors import RateLimitExceeded
 
 from .core.config import settings
+
+# Initialize Sentry observability via MOD SQUAD helper
+from .core.observability import init_sentry
 from .routers import (
     ai,
     analytics,
@@ -58,41 +67,7 @@ from .routers import settings as settings_router
 from .scheduler import init_scheduler
 
 
-# Initialize Sentry if DSN is configured
-if settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        integrations=[
-            StarletteIntegration(transaction_style="endpoint"),
-            FastApiIntegration(transaction_style="endpoint"),
-        ],
-        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
-        profiles_sample_rate=0.1,  # 10% profiling
-        environment=(
-            "production"
-            if "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
-            else "development"
-        ),
-        release="paiid-backend@1.0.0",
-        send_default_pii=False,  # Don't send personally identifiable info
-        before_send=lambda event, hint: (
-            event
-            if not event.get("request", {}).get("headers", {}).get("Authorization")
-            else {
-                **event,
-                "request": {
-                    **event.get("request", {}),
-                    "headers": {
-                        **event.get("request", {}).get("headers", {}),
-                        "Authorization": "[REDACTED]",
-                    },
-                },
-            }
-        ),
-    )
-    print("[OK] Sentry error tracking initialized", flush=True)
-else:
-    print("[WARNING] SENTRY_DSN not configured - error tracking disabled", flush=True)
+init_sentry()
 
 print("\n===== SETTINGS LOADED =====")
 print(f"settings.API_TOKEN: {'***' if settings.API_TOKEN else 'NOT_SET'}")

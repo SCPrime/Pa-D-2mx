@@ -15,8 +15,8 @@ from ..core.config import get_settings
 from ..core.readiness_registry import get_readiness_registry
 from ..core.unified_auth import get_current_user_unified
 from ..models.database import User
-from ..services.cache import CacheService, get_cache
 from ..runtime.temporal_oracle import default_oracle
+from ..services.cache import CacheService, get_cache
 from ..services.tradier_client import ProviderHTTPError, get_tradier_client
 
 
@@ -155,7 +155,9 @@ async def get_quote(
             fb = _fallback_quote_from_history(symbol, client)
             if fb:
                 cache.set(cache_key, fb, ttl=settings.CACHE_TTL_QUOTE)
-                logger.info(f"🟡 Fallback quote (historical) used for {symbol} after provider 404")
+                logger.info(
+                    f"🟡 Fallback quote (historical) used for {symbol} after provider 404"
+                )
                 return fb
             raise HTTPException(
                 status_code=404, detail=f"Upstream not found: {symbol}"
@@ -568,7 +570,9 @@ async def get_historical_data(
 
         if start:
             start_dt = datetime.strptime(start, "%Y-%m-%d")
-            start_date = datetime(start_dt.year, start_dt.month, start_dt.day, tzinfo=UTC)
+            start_date = datetime(
+                start_dt.year, start_dt.month, start_dt.day, tzinfo=UTC
+            )
         else:
             start_date = end_date - timedelta(days=30)  # Default to 30 days
     except ValueError as e:
@@ -627,7 +631,9 @@ async def get_historical_data(
                 else:
                     ts = datetime.fromisoformat(ts_str).astimezone(UTC)
             except Exception as e:
-                logger.warning(f"Skipping bar with unparsable timestamp: {ts_str!r} ({e!s})")
+                logger.warning(
+                    f"Skipping bar with unparsable timestamp: {ts_str!r} ({e!s})"
+                )
                 continue
 
             # Skip any future bars relative to sim time (anti-look-ahead)

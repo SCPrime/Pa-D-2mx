@@ -1,0 +1,51 @@
+version: 1
+browser_guardrails:
+  visual_regression:
+    tool: percy
+    threshold_percent: 5
+    block_on_fail: true
+    auto_baseline_update: false
+  accessibility:
+    tool: axe-core
+    min_score: 90
+    block_on_fail: true
+    wcag_level: AA
+    rules:
+      - color-contrast
+      - aria-required-attr
+      - button-name
+      - image-alt
+      - label
+      - link-name
+  performance:
+    tool: lighthouse
+    min_score: 85
+    max_bundle_kb: 500
+    block_on_fail: true
+    thresholds:
+      first_contentful_paint_ms: 1500
+      time_to_interactive_ms: 3500
+      cumulative_layout_shift: 0.1
+  runtime_errors:
+    tool: sentry
+    auto_issue_creation: true
+    alert_threshold: 10_errors_per_hour
+    environments:
+      - production
+      - staging
+  session_replay:
+    tool: logrocket
+    enabled: false  # Enable after trial setup
+    retention_days: 30
+    pii_masking: true
+    sample_rate: 0.1
+  contract_testing:
+    tool: dredd
+    enabled: true
+    spec_path: backend/docs/openapi.yaml
+    block_on_drift: true
+  bundle_analysis:
+    tool: webpack-bundle-analyzer
+    max_chunk_kb: 500
+    alert_on_increase_pct: 10
+

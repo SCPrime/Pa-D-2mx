@@ -53,5 +53,3 @@ class TemporalOracle:
 
 # Singleton-style default for simple usage before DI wiring
 default_oracle = TemporalOracle()
-
-

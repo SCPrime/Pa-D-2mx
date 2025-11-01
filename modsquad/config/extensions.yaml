@@ -1,0 +1,129 @@
+version: 1
+extensions:
+  maintenance_notifier:
+    enabled: true
+    batching: sequential
+    webhook_env: MODSQUAD_NOTIFICATION_WEBHOOK
+    channels:
+      - ops-alerts
+      - executive-briefs
+    notify_on:
+      - maintenance_complete
+      - guardrail_failure
+      - budget_threshold
+  metrics_streamer:
+    enabled: true
+    batching: sequential
+    output:
+      type: file
+      path: ../logs/run-history/metrics.jsonl
+    fields:
+      - maintenance_window
+      - execution_time_ms
+      - guardrail_status
+      - token_spend
+      - scheduled_job
+  secrets_watchdog:
+    enabled: true
+    batching: sequential
+    secrets:
+      - env: OPENAI_API_KEY
+        rotation_days: 30
+      - env: ANTHROPIC_API_KEY
+        rotation_days: 30
+      - env: MODSQUAD_NOTIFICATION_WEBHOOK
+        rotation_days: 14
+  strategy_verifier:
+    enabled: true
+    batching: sequential
+    commands:
+      - name: smoke-backtest
+        run: uv run python scripts/strategies/verify.py
+      - name: regression-suite
+        run: uv run pytest tests/strategies -q
+      - name: browser-regression
+        run: cd frontend && npm run playwright:test:ci
+    artifacts:
+      path: ../logs/run-history/strategy_verifier
+      keep: 10
+  browser_validator:
+    enabled: true
+    batching: sequential
+    config_path: ./browser_guardrails.yaml
+    concealment_checks:
+      - robots_meta_tags
+      - copyright_headers
+      - sensitive_data_scan
+      - robots_txt_accessibility
+  contract_enforcer:
+    enabled: true
+    batching: sequential
+    config_path: ./browser_guardrails.yaml
+  infra_health:
+    enabled: true
+    batching: sequential
+    config_path: ./browser_guardrails.yaml
+  concealment_validator:
+    enabled: true
+    batching: sequential
+    priority: critical
+    checks:
+      - license_file
+      - copyright_headers
+      - robots_meta_tags
+      - robots_txt
+      - readme_warning
+      - secrets_scan
+      - api_auth
+    block_on_failure: true
+  copyright_scanner:
+    enabled: true
+    batching: sequential
+    auto_fix: false
+    file_patterns:
+      - '**/*.py'
+      - '**/*.tsx'
+      - '**/*.ts'
+      - '**/*.js'
+      - '**/*.html'
+    exclude_patterns:
+      - '**/node_modules/**'
+      - '**/__pycache__/**'
+      - '**/.next/**'
+    report_path: ../logs/run-history/copyright_scan.jsonl
+  visibility_lockdown:
+    enabled: true
+    batching: sequential
+    repository: SCPrime/Pa-D-2mx
+    checks:
+      - repo_visibility
+      - github_pages_status
+      - public_urls
+      - robots_txt_accessible
+      - search_engine_indexing
+    alert_on_violations: true
+  concealment_reporter:
+    enabled: true
+    batching: sequential
+    output: ../logs/run-history/concealment_report.jsonl
+    inputs:
+      - concealment_validator
+      - copyright_scanner
+      - visibility_lockdown
+      - secrets_watchdog
+    dashboard_enabled: true
+  guardrail_scheduler:
+    enabled: true
+    batching: sequential
+    cadence:
+      timezone: UTC
+      cron: '0 1 * * *'
+    runs:
+      - concealment_validator
+      - copyright_scanner
+      - visibility_lockdown
+      - secrets_watchdog
+      - browser_validator
+      - contract_enforcer
+      - dependency_tracker
+      - design_dna_validator

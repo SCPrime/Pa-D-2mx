@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /
+
+# PaiiD-2mx Trading Platform
+# Copyright © 2025 Dr. SC Prime. All Rights Reserved.
+# PROPRIETARY AND CONFIDENTIAL
+

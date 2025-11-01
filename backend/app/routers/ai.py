@@ -1,4 +1,4 @@
-"""
+﻿"""
 AI Recommendations Router
 Provides AI-generated trading recommendations based on market analysis
 """
@@ -268,7 +268,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user_unif
         )
 
         logger.info(
-            f"✅ Generated {len(recommendations)} portfolio-aware recommendations"
+            f"âœ… Generated {len(recommendations)} portfolio-aware recommendations"
         )
 
         return RecommendationsResponse(
@@ -279,7 +279,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user_unif
         )
 
     except Exception as e:
-        logger.error(f"❌ Failed to generate recommendations: {e!s}")
+        logger.error(f"âŒ Failed to generate recommendations: {e!s}")
         raise HTTPException(
             status_code=500, detail=f"Failed to generate recommendations: {e!s}"
         )
@@ -287,7 +287,7 @@ async def get_recommendations(current_user: User = Depends(get_current_user_unif
 
 @router.get("/recommendations/{symbol}", response_model=Recommendation)
 async def get_symbol_recommendation(
-    symbol: str = Path(..., min_length=1, max_length=10, pattern="^[A-Z0-9$.:^-]+$")
+    symbol: str = Path(..., min_length=1, max_length=10, pattern="^[A-Z0-9$.:^-]+$"),
 ):
     """
     Get AI recommendation for a specific symbol using real market data
@@ -325,14 +325,14 @@ async def get_symbol_recommendation(
         )
 
         logger.info(
-            f"✅ Generated recommendation for {symbol} using real price: ${current_price:.2f}"
+            f"âœ… Generated recommendation for {symbol} using real price: ${current_price:.2f}"
         )
         return recommendation
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to generate recommendation for {symbol}: {e!s}")
+        logger.error(f"âŒ Failed to generate recommendation for {symbol}: {e!s}")
         raise HTTPException(
             status_code=500, detail=f"Failed to generate recommendation: {e!s}"
         )
@@ -400,10 +400,10 @@ async def get_ml_signals(
         # Return empty recommendations if none met criteria (no mock fallback)
         if not recommendations:
             logger.warning(
-                f"⚠️ No technical signals met min_confidence threshold of {min_confidence} for symbols: {symbols}"
+                f"âš ï¸ No technical signals met min_confidence threshold of {min_confidence} for symbols: {symbols}"
             )
 
-        logger.info(f"✅ Generated {len(recommendations)} real technical signals")
+        logger.info(f"âœ… Generated {len(recommendations)} real technical signals")
 
         return RecommendationsResponse(
             recommendations=recommendations[:5],  # Return top 5
@@ -482,7 +482,7 @@ async def _generate_technical_signal(symbol: str) -> Recommendation | None:
         )
 
         logger.info(
-            f"✅ Generated technical signal for {symbol} using {len(prices)} real price bars"
+            f"âœ… Generated technical signal for {symbol} using {len(prices)} real price bars"
         )
         return recommendation
 
@@ -655,7 +655,7 @@ async def analyze_symbol(
         # Generate summary
         summary = f"{action} signal with {confidence:.1f}% confidence. {trend} with {momentum.lower()} momentum. Key levels: Support ${support_level:.2f}, Resistance ${resistance_level:.2f}."
 
-        logger.info(f"✅ Generated comprehensive analysis for {symbol}")
+        logger.info(f"âœ… Generated comprehensive analysis for {symbol}")
 
         return SymbolAnalysis(
             symbol=symbol,
@@ -690,7 +690,7 @@ async def analyze_symbol(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to analyze {symbol}: {e!s}")
+        logger.error(f"âŒ Failed to analyze {symbol}: {e!s}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e!s}")
 
 
@@ -738,7 +738,7 @@ async def _fetch_portfolio_data() -> dict:
         }
 
     except Exception as e:
-        logger.warning(f"⚠️ Could not fetch portfolio data: {e}")
+        logger.warning(f"âš ï¸ Could not fetch portfolio data: {e}")
         # Return empty portfolio on error
         return {
             "total_value": 100000.0,  # Default $100k portfolio
@@ -788,20 +788,24 @@ def _analyze_portfolio_fit(symbol: str, action: str, portfolio_data: dict) -> st
         pct = existing_position["pct_of_portfolio"]
         if action == "BUY":
             if pct > 15:
-                return f"⚠️ Already {pct:.1f}% of portfolio - High concentration risk"
+                return (
+                    f"âš ï¸ Already {pct:.1f}% of portfolio - High concentration risk"
+                )
             elif pct > 10:
-                return f"⚠️ Already {pct:.1f}% of portfolio - Consider diversification"
+                return (
+                    f"âš ï¸ Already {pct:.1f}% of portfolio - Consider diversification"
+                )
             else:
-                return f"✅ Currently {pct:.1f}% of portfolio - Room to add"
+                return f"âœ… Currently {pct:.1f}% of portfolio - Room to add"
         elif action == "SELL":
-            return f"📊 Reduce position (currently {pct:.1f}% of portfolio)"
+            return f"ðŸ“Š Reduce position (currently {pct:.1f}% of portfolio)"
     else:
         if action == "BUY":
-            return "✅ New position - Adds diversification"
+            return "âœ… New position - Adds diversification"
         elif action == "SELL":
             return "N/A - Not currently held"
 
-    return "✅ Good fit"
+    return "âœ… Good fit"
 
 
 def _calculate_position_size(
@@ -874,22 +878,22 @@ def _generate_portfolio_analysis(
 
     if num_positions == 0:
         portfolio_recommendations.append(
-            "💡 Start with 3-5 positions to build a diversified portfolio"
+            "ðŸ’¡ Start with 3-5 positions to build a diversified portfolio"
         )
     elif num_positions < 5:
         portfolio_recommendations.append(
-            f"💡 Consider adding {5 - num_positions} more positions for better diversification"
+            f"ðŸ’¡ Consider adding {5 - num_positions} more positions for better diversification"
         )
     elif num_positions > 15:
         portfolio_recommendations.append(
-            "💡 Consider consolidating positions - you may be over-diversified"
+            "ðŸ’¡ Consider consolidating positions - you may be over-diversified"
         )
 
     if num_positions > 0:
         max_position = max(positions, key=lambda p: p["pct_of_portfolio"])
         if max_position["pct_of_portfolio"] > 20:
             portfolio_recommendations.append(
-                f"⚠️ {max_position['symbol']} is {max_position['pct_of_portfolio']:.1f}% of portfolio - High concentration risk"
+                f"âš ï¸ {max_position['symbol']} is {max_position['pct_of_portfolio']:.1f}% of portfolio - High concentration risk"
             )
 
     # Check if any recommendations would improve diversification
@@ -902,7 +906,7 @@ def _generate_portfolio_analysis(
         ]
         if new_symbols:
             portfolio_recommendations.append(
-                f"✅ {len(new_symbols)} recommendations add new diversification"
+                f"âœ… {len(new_symbols)} recommendations add new diversification"
             )
 
     return PortfolioAnalysis(
@@ -956,7 +960,7 @@ async def _calculate_momentum_analysis(
 
         if not bars or len(bars) < 200:
             logger.warning(
-                f"⚠️ Insufficient data for momentum analysis: {symbol} ({len(bars) if bars else 0} bars)"
+                f"âš ï¸ Insufficient data for momentum analysis: {symbol} ({len(bars) if bars else 0} bars)"
             )
             # Return neutral default data
             return {
@@ -1021,7 +1025,7 @@ async def _calculate_momentum_analysis(
             trend_alignment = "Mixed"
 
         logger.info(
-            f"✅ Calculated momentum for {symbol}: {trend_alignment}, Vol: {volume_strength}"
+            f"âœ… Calculated momentum for {symbol}: {trend_alignment}, Vol: {volume_strength}"
         )
 
         return {
@@ -1038,7 +1042,7 @@ async def _calculate_momentum_analysis(
         }
 
     except Exception as e:
-        logger.error(f"❌ Momentum analysis error for {symbol}: {e!s}")
+        logger.error(f"âŒ Momentum analysis error for {symbol}: {e!s}")
         # Return neutral data on error
         return {
             "sma_20": current_price,
@@ -1189,17 +1193,17 @@ async def _fetch_sector_performance() -> dict:
         if response.status_code == 200:
             data = response.json()
             logger.info(
-                f"✅ Fetched sector performance: {data.get('leader')} leading, {data.get('laggard')} lagging"
+                f"âœ… Fetched sector performance: {data.get('leader')} leading, {data.get('laggard')} lagging"
             )
             return data
         else:
             logger.warning(
-                f"⚠️ Sector performance endpoint returned {response.status_code}"
+                f"âš ï¸ Sector performance endpoint returned {response.status_code}"
             )
             return {"sectors": [], "leader": "Unknown", "laggard": "Unknown"}
 
     except Exception as e:
-        logger.error(f"❌ Failed to fetch sector performance: {e!s}")
+        logger.error(f"âŒ Failed to fetch sector performance: {e!s}")
         return {"sectors": [], "leader": "Unknown", "laggard": "Unknown"}
 
 
@@ -1233,7 +1237,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
         )
 
         if not bars or len(bars) < 50:
-            logger.warning(f"⚠️ Insufficient data for volatility analysis: {symbol}")
+            logger.warning(f"âš ï¸ Insufficient data for volatility analysis: {symbol}")
             return {
                 "atr": 0.0,
                 "atr_percent": 2.0,
@@ -1273,7 +1277,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
         volatility_score = min(10.0, max(0.0, (bb_width / 10) * 10))
 
         logger.info(
-            f"✅ Calculated volatility for {symbol}: {volatility_class} (ATR: {atr_percent:.1f}%, BB: {bb_width:.1f}%)"
+            f"âœ… Calculated volatility for {symbol}: {volatility_class} (ATR: {atr_percent:.1f}%, BB: {bb_width:.1f}%)"
         )
 
         return {
@@ -1285,7 +1289,7 @@ async def _calculate_volatility_analysis(symbol: str, current_price: float) -> d
         }
 
     except Exception as e:
-        logger.error(f"❌ Volatility analysis error for {symbol}: {e!s}")
+        logger.error(f"âŒ Volatility analysis error for {symbol}: {e!s}")
         # Return neutral data on error
         return {
             "atr": 0.0,
@@ -1481,7 +1485,7 @@ def _generate_recommendation_explanation(
     explanation_parts.append("")
 
     # Price analysis
-    explanation_parts.append("**📊 Price Analysis:**")
+    explanation_parts.append("**ðŸ“Š Price Analysis:**")
     explanation_parts.append(
         f"- Current Price: ${current_price:.2f} ({change_percent:+.2f}% today)"
     )
@@ -1497,49 +1501,49 @@ def _generate_recommendation_explanation(
     explanation_parts.append("")
 
     # Volume analysis
-    explanation_parts.append("**📈 Volume Analysis:**")
+    explanation_parts.append("**ðŸ“ˆ Volume Analysis:**")
     explanation_parts.append(
         f"- Volume Strength: **{volume_strength}** ({volume_ratio:.1f}x average)"
     )
     if volume_strength == "High":
-        explanation_parts.append("- ✅ High volume confirms price movement strength")
+        explanation_parts.append("- âœ… High volume confirms price movement strength")
     elif volume_strength == "Low":
         explanation_parts.append(
-            "- ⚠️ Low volume suggests weak conviction in price move"
+            "- âš ï¸ Low volume suggests weak conviction in price move"
         )
     else:
-        explanation_parts.append("- 📊 Normal volume - no unusual activity")
+        explanation_parts.append("- ðŸ“Š Normal volume - no unusual activity")
     explanation_parts.append("")
 
     # Trend analysis
-    explanation_parts.append("**🎯 Trend Analysis:**")
+    explanation_parts.append("**ðŸŽ¯ Trend Analysis:**")
     explanation_parts.append(f"- Trend Alignment: **{trend}**")
     if trend == "Bullish":
         explanation_parts.append(
-            "- ✅ All moving averages aligned bullish (SMA-20 > SMA-50 > SMA-200)"
+            "- âœ… All moving averages aligned bullish (SMA-20 > SMA-50 > SMA-200)"
         )
     elif trend == "Bearish":
         explanation_parts.append(
-            "- ⚠️ All moving averages aligned bearish (SMA-20 < SMA-50 < SMA-200)"
+            "- âš ï¸ All moving averages aligned bearish (SMA-20 < SMA-50 < SMA-200)"
         )
     elif "Mixed" in trend:
         explanation_parts.append(
-            "- ⚠️ Mixed signals - some bullish, some bearish indicators"
+            "- âš ï¸ Mixed signals - some bullish, some bearish indicators"
         )
     explanation_parts.append("")
 
     # Risk assessment
-    explanation_parts.append("**⚡ Risk Assessment:**")
+    explanation_parts.append("**âš¡ Risk Assessment:**")
     explanation_parts.append(f"- Risk Level: **{risk}**")
     if risk == "Low":
-        explanation_parts.append("- ✅ Strong signals with high confidence")
+        explanation_parts.append("- âœ… Strong signals with high confidence")
     elif risk == "Medium":
         explanation_parts.append(
-            "- ⚠️ Moderate risk - proceed with caution and proper stop loss"
+            "- âš ï¸ Moderate risk - proceed with caution and proper stop loss"
         )
     else:
         explanation_parts.append(
-            "- 🔴 High risk - weak signals, consider waiting for better setup"
+            "- ðŸ”´ High risk - weak signals, consider waiting for better setup"
         )
 
     return "\n".join(explanation_parts)
@@ -1611,10 +1615,10 @@ async def get_recommended_templates(
                     market_volatility = "Medium"
 
                 logger.info(
-                    f"📊 Detected market volatility: {market_volatility} (BB width: {bb_width:.2f}%)"
+                    f"ðŸ“Š Detected market volatility: {market_volatility} (BB width: {bb_width:.2f}%)"
                 )
         except Exception as e:
-            logger.warning(f"⚠️ Could not detect market volatility: {e}")
+            logger.warning(f"âš ï¸ Could not detect market volatility: {e}")
 
         # Get templates filtered by user's risk tolerance
         templates = filter_templates_by_risk(risk_tolerance)
@@ -1633,50 +1637,52 @@ async def get_recommended_templates(
             # Risk compatibility
             if risk_tolerance <= 33 and template.risk_level == "Conservative":
                 rationale_parts.append(
-                    f"✅ Perfect match for your conservative risk profile ({risk_tolerance}/100)"
+                    f"âœ… Perfect match for your conservative risk profile ({risk_tolerance}/100)"
                 )
             elif 34 <= risk_tolerance <= 66 and template.risk_level == "Moderate":
                 rationale_parts.append(
-                    f"✅ Ideal for your moderate risk tolerance ({risk_tolerance}/100)"
+                    f"âœ… Ideal for your moderate risk tolerance ({risk_tolerance}/100)"
                 )
             elif risk_tolerance > 66 and template.risk_level == "Aggressive":
                 rationale_parts.append(
-                    f"✅ Matches your aggressive risk appetite ({risk_tolerance}/100)"
+                    f"âœ… Matches your aggressive risk appetite ({risk_tolerance}/100)"
                 )
             else:
                 rationale_parts.append(
-                    f"⚠️ Different risk profile - template is {template.risk_level}, you're at {risk_tolerance}/100"
+                    f"âš ï¸ Different risk profile - template is {template.risk_level}, you're at {risk_tolerance}/100"
                 )
 
             # Market compatibility
             if market_volatility == "High":
                 if template.strategy_type in ["momentum", "volatility_breakout"]:
                     rationale_parts.append(
-                        "✅ Excellent for current high volatility market conditions"
+                        "âœ… Excellent for current high volatility market conditions"
                     )
                 elif template.strategy_type == "mean_reversion":
                     rationale_parts.append(
-                        "⚠️ Mean reversion may struggle in high volatility"
+                        "âš ï¸ Mean reversion may struggle in high volatility"
                     )
             elif market_volatility == "Low":
                 if template.strategy_type == "mean_reversion":
                     rationale_parts.append(
-                        "✅ Perfect for current low volatility environment"
+                        "âœ… Perfect for current low volatility environment"
                     )
                 elif template.strategy_type in ["momentum", "volatility_breakout"]:
-                    rationale_parts.append("⚠️ Limited opportunities in low volatility")
+                    rationale_parts.append(
+                        "âš ï¸ Limited opportunities in low volatility"
+                    )
             else:
-                rationale_parts.append("✅ Good fit for current market conditions")
+                rationale_parts.append("âœ… Good fit for current market conditions")
 
             # Performance highlights
             rationale_parts.append(
-                f"📈 Historical win rate: {template.expected_win_rate:.0f}%"
+                f"ðŸ“ˆ Historical win rate: {template.expected_win_rate:.0f}%"
             )
             rationale_parts.append(
-                f"💰 Avg return per trade: {template.avg_return_percent:.1f}%"
+                f"ðŸ’° Avg return per trade: {template.avg_return_percent:.1f}%"
             )
             rationale_parts.append(
-                f"📉 Max drawdown: {template.max_drawdown_percent:.1f}%"
+                f"ðŸ“‰ Max drawdown: {template.max_drawdown_percent:.1f}%"
             )
 
             recommended_templates.append(
@@ -1700,7 +1706,7 @@ async def get_recommended_templates(
         recommended_templates.sort(key=lambda x: x["compatibility_score"], reverse=True)
 
         logger.info(
-            f"✅ Generated {len(recommended_templates)} AI-matched template recommendations"
+            f"âœ… Generated {len(recommended_templates)} AI-matched template recommendations"
         )
 
         return {
@@ -1713,7 +1719,7 @@ async def get_recommended_templates(
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to generate template recommendations: {e!s}")
+        logger.error(f"âŒ Failed to generate template recommendations: {e!s}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate template recommendations: {e!s}",
@@ -1824,7 +1830,7 @@ async def save_recommendation(
         db.refresh(recommendation)
 
         logger.info(
-            f"✅ Saved recommendation: {request.symbol} {request.recommendation_type.upper()} ({request.confidence_score:.1f}% confidence)"
+            f"âœ… Saved recommendation: {request.symbol} {request.recommendation_type.upper()} ({request.confidence_score:.1f}% confidence)"
         )
 
         return {
@@ -1834,7 +1840,7 @@ async def save_recommendation(
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to save recommendation: {e!s}")
+        logger.error(f"âŒ Failed to save recommendation: {e!s}")
         raise HTTPException(
             status_code=500, detail=f"Failed to save recommendation: {e!s}"
         )
@@ -1921,13 +1927,13 @@ async def get_recommendation_history(
             )
 
         logger.info(
-            f"✅ Retrieved {len(result)} recommendations from history (filters: symbol={symbol}, status={status})"
+            f"âœ… Retrieved {len(result)} recommendations from history (filters: symbol={symbol}, status={status})"
         )
 
         return result
 
     except Exception as e:
-        logger.error(f"❌ Failed to retrieve recommendation history: {e!s}")
+        logger.error(f"âŒ Failed to retrieve recommendation history: {e!s}")
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve recommendation history: {e!s}"
         )
@@ -1974,7 +1980,7 @@ async def analyze_portfolio(current_user: User = Depends(get_current_user_unifie
 
         from anthropic import Anthropic
 
-        logger.info("🤖 AI Portfolio Analysis - Starting...")
+        logger.info("ðŸ¤– AI Portfolio Analysis - Starting...")
 
         # Step 1: Get account data from Tradier
         client = get_tradier_client()
@@ -1988,7 +1994,7 @@ async def analyze_portfolio(current_user: User = Depends(get_current_user_unifie
         positions_list = positions if isinstance(positions, list) else []
 
         logger.info(
-            f"📊 Account: ${float(account_data.get('total_equity', 0)):.2f}, Positions: {len(positions_list)}"
+            f"ðŸ“Š Account: ${float(account_data.get('total_equity', 0)):.2f}, Positions: {len(positions_list)}"
         )
 
         # Step 3: Calculate portfolio metrics
@@ -2039,9 +2045,9 @@ Positions:
             portfolio_summary += "No open positions\n"
 
         # Step 5: Call Claude API for analysis
-        ANTHROPIC_API_KEY=***REDACTED***
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         if not anthropic_api_key:
-            logger.warning("⚠️ ANTHROPIC_API_KEY not set, using rule-based analysis")
+            logger.warning("âš ï¸ ANTHROPIC_API_KEY not set, using rule-based analysis")
             # Fallback to rule-based analysis
             return _generate_rule_based_portfolio_analysis(
                 total_value,
@@ -2075,7 +2081,7 @@ Format your response as JSON with these exact keys:
   "ai_summary": "<2-3 sentence summary>"
 }}"""
 
-        logger.info("🤖 Sending request to Claude API...")
+        logger.info("ðŸ¤– Sending request to Claude API...")
 
         message = anthropic.messages.create(
             model="claude-sonnet-4-20250514",
@@ -2096,7 +2102,7 @@ Format your response as JSON with these exact keys:
 
         ai_analysis = json.loads(response_text)
 
-        logger.info("✅ Claude API analysis complete")
+        logger.info("âœ… Claude API analysis complete")
 
         # Step 6: Build response
         return PortfolioAnalysisResponse(
@@ -2115,7 +2121,7 @@ Format your response as JSON with these exact keys:
         )
 
     except Exception as e:
-        logger.error(f"❌ Portfolio analysis failed: {e!s}")
+        logger.error(f"âŒ Portfolio analysis failed: {e!s}")
         raise HTTPException(status_code=500, detail=f"Portfolio analysis failed: {e!s}")
 
 
@@ -2240,7 +2246,7 @@ async def analyze_news(
     Returns sentiment, tickers mentioned, and portfolio impact assessment
     """
     try:
-        logger.info("🤖 News Analysis - Starting...")
+        logger.info("ðŸ¤– News Analysis - Starting...")
 
         # Extract article data
         title = article.get("title", "")
@@ -2259,7 +2265,7 @@ async def analyze_news(
         positions = client.get_positions()
         user_tickers = [p.get("symbol") for p in positions if p.get("symbol")]
 
-        logger.info(f"📊 User has {len(user_tickers)} positions")
+        logger.info(f"ðŸ“Š User has {len(user_tickers)} positions")
 
         # Build Claude prompt
         prompt = f"""Analyze this news article for trading insights.
@@ -2291,11 +2297,11 @@ Base your analysis on:
 - Whether it affects the user's positions
 - Urgency for action"""
 
-        logger.info("🤖 Sending request to Claude API...")
+        logger.info("ðŸ¤– Sending request to Claude API...")
 
         from anthropic import Anthropic
 
-        ANTHROPIC_API_KEY=***REDACTED***
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         if not anthropic_api_key:
             raise HTTPException(
                 status_code=500, detail="ANTHROPIC_API_KEY not configured"
@@ -2310,7 +2316,7 @@ Base your analysis on:
         )
 
         ai_text = message.content[0].text
-        logger.info(f"✅ Received AI response: {len(ai_text)} chars")
+        logger.info(f"âœ… Received AI response: {len(ai_text)} chars")
 
         # Parse JSON response
         # Remove markdown code blocks
@@ -2326,7 +2332,7 @@ Base your analysis on:
             raise ValueError(f"Could not parse AI response: {ai_text}")
 
         logger.info(
-            f"✅ News analysis complete - Sentiment: {analysis.get('sentiment')}"
+            f"âœ… News analysis complete - Sentiment: {analysis.get('sentiment')}"
         )
 
         # Return enriched analysis
@@ -2348,7 +2354,7 @@ Base your analysis on:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ News analysis error: {e!s}")
+        logger.error(f"âŒ News analysis error: {e!s}")
         raise HTTPException(status_code=500, detail=f"News analysis failed: {e!s}")
 
 
@@ -2372,7 +2378,9 @@ async def analyze_news_batch(
     Returns array of analysis results
     """
     try:
-        logger.info(f"🤖 Batch News Analysis - Processing {len(articles)} articles...")
+        logger.info(
+            f"ðŸ¤– Batch News Analysis - Processing {len(articles)} articles..."
+        )
 
         results = []
 
@@ -2389,10 +2397,10 @@ async def analyze_news_batch(
                     }
                 )
 
-        logger.info(f"✅ Batch analysis complete - Analyzed {len(results)} articles")
+        logger.info(f"âœ… Batch analysis complete - Analyzed {len(results)} articles")
 
         return {"success": True, "results": results, "analyzed_count": len(results)}
 
     except Exception as e:
-        logger.error(f"❌ Batch news analysis error: {e!s}")
+        logger.error(f"âŒ Batch news analysis error: {e!s}")
         raise HTTPException(status_code=500, detail=f"Batch analysis failed: {e!s}")
