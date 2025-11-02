@@ -6,13 +6,26 @@
  * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import LoginForm from "../components/auth/LoginForm";
-import { TrendingTokens } from "../components/market/TrendingTokens";
 import { WalletButton } from "../components/wallet/WalletButton";
 import { useAuth } from "../hooks/useAuth";
 import { logger } from "../lib/logger";
+
+// Lazy load TrendingTokens (below fold, non-critical)
+const TrendingTokens = dynamic(
+  () => import("../components/market/TrendingTokens").then((mod) => ({ default: mod.TrendingTokens })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 export default function Home() {
   // === AUTHENTICATION CHECK - ENFORCES LOGIN ON LAUNCH ===

@@ -15,6 +15,7 @@ import sentry_sdk
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 
 
 # Load environment variables
@@ -62,6 +63,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add GZIP compression for responses >1KB (reduces bandwidth by ~70%)
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
+logger.info("✅ GZIP compression enabled for responses >1KB")
 
 # Import routers
 from .routers import dex
