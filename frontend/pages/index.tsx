@@ -67,19 +67,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">PaiiD 2MX</h1>
-            <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-semibold rounded-full border border-blue-500/30">
-              DEX Platform
-                </span>
-              </div>
-          <WalletButton />
-            </div>
-      </header>
-
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -184,11 +171,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-6 py-8 text-center text-slate-400 text-sm border-t border-slate-700/50">
-        <p>© 2025 Dr. SC Prime. All Rights Reserved. | PaiiD 2MX - DEX Trading Platform</p>
-      </footer>
     </div>
   );
 }

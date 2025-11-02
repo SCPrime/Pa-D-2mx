@@ -1,9 +1,12 @@
 import type { AppProps } from "next/app";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import AIChatBot from "../components/AIChatBot";
 import { ChatProvider, useChat } from "../components/ChatContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import Footer from "../components/layout/Footer";
+import Header from "../components/layout/Header";
 import StoryboardCanvas from "../components/StoryboardCanvas";
 import { TelemetryProvider } from "../components/TelemetryProvider";
 import { AuthProvider } from "../contexts/AuthContext";
@@ -32,11 +35,16 @@ function AppContent({
   userRole,
   telemetryEnabled,
 }: AppPropsExtended) {
+  const router = useRouter();
   const { isChatOpen, closeChat, openChat } = useChat();
   const [isStoryboardOpen, setIsStoryboardOpen] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Pages that should NOT show header/footer (full-screen experiences)
+  const noLayoutPages = ["/login", "/register"];
+  const showLayout = !noLayoutPages.includes(router.pathname);
 
   // Initialize hotkey manager
   useEffect(() => {
@@ -114,7 +122,17 @@ function AppContent({
 
   return (
     <TelemetryProvider userId={userId} userRole={userRole} enabled={telemetryEnabled}>
-      <Component {...pageProps} />
+      {/* Persistent Navigation Layout */}
+      {showLayout && <Header />}
+      
+      {/* Main Content */}
+      <div className={showLayout ? "flex flex-col min-h-screen" : ""}>
+        <main className={showLayout ? "flex-1" : ""}>
+          <Component {...pageProps} />
+        </main>
+        {showLayout && <Footer />}
+      </div>
+      
       <AIChatBot isOpen={isChatOpen} onClose={closeChat} />
 
       {/* Storyboard Canvas */}
