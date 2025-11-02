@@ -7,9 +7,19 @@ and training analytics. Enables long-term ML system monitoring.
 Phase 1E: Production Hardening - Database Schema
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from ..db.session import Base
@@ -21,7 +31,9 @@ class MLPredictionHistory(Base):
     __tablename__ = "ml_prediction_history"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
 
     # Model identification
     # Examples: regime_detector, strategy_selector, etc.
@@ -31,7 +43,9 @@ class MLPredictionHistory(Base):
     # Input parameters (stored as JSON for flexibility)
     # Example: {"symbol": "AAPL", "lookback_days": 90, "features": {...}}
     input_params = Column(JSON, nullable=False)
-    input_hash = Column(String(32), nullable=False, index=True)  # MD5 hash for deduplication
+    input_hash = Column(
+        String(32), nullable=False, index=True
+    )  # MD5 hash for deduplication
 
     # Prediction output (stored as JSON)
     # Example: {
@@ -56,19 +70,25 @@ class MLPredictionHistory(Base):
     cache_hit = Column(Integer, default=0, nullable=False)  # 1=cached, 0=computed
 
     # Metadata
-    symbol = Column(String(20), nullable=True, index=True)  # For symbol-specific analysis
-    market_regime = Column(String(50), nullable=True, index=True)  # Market state at prediction time
+    symbol = Column(
+        String(20), nullable=True, index=True
+    )  # For symbol-specific analysis
+    market_regime = Column(
+        String(50), nullable=True, index=True
+    )  # Market state at prediction time
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     validated_at = Column(DateTime, nullable=True)  # When accuracy was confirmed
 
     # Composite indexes for ML prediction queries
     __table_args__ = (
-        Index('idx_ml_pred_model_symbol_date', 'model_id', 'symbol', 'created_at'),
-        Index('idx_ml_pred_user_model', 'user_id', 'model_id'),
-        Index('idx_ml_pred_symbol_created', 'symbol', 'created_at'),
-        Index('idx_ml_pred_model_hash', 'model_id', 'input_hash'),  # For cache lookups
+        Index("idx_ml_pred_model_symbol_date", "model_id", "symbol", "created_at"),
+        Index("idx_ml_pred_user_model", "user_id", "model_id"),
+        Index("idx_ml_pred_symbol_created", "symbol", "created_at"),
+        Index("idx_ml_pred_model_hash", "model_id", "input_hash"),  # For cache lookups
     )
 
     def __repr__(self):
@@ -130,17 +150,21 @@ class MLModelMetrics(Base):
     cache_hit_rate = Column(Float, nullable=True)  # 0.0 to 1.0
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, index=True
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+        index=True,
     )
     last_trained_at = Column(DateTime, nullable=True)
     last_evaluated_at = Column(DateTime, nullable=True)
 
     # Composite indexes for model metrics queries
     __table_args__ = (
-        Index('idx_ml_metrics_model_version', 'model_id', 'model_version'),
-        Index('idx_ml_metrics_model_updated', 'model_id', 'updated_at'),
+        Index("idx_ml_metrics_model_version", "model_id", "model_version"),
+        Index("idx_ml_metrics_model_updated", "model_id", "updated_at"),
     )
 
     def __repr__(self):
@@ -156,7 +180,9 @@ class MLTrainingJob(Base):
     __tablename__ = "ml_training_jobs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
 
     # Job identification
     job_id = Column(String(100), unique=True, nullable=False, index=True)  # UUID
@@ -195,15 +221,17 @@ class MLTrainingJob(Base):
     model_size_mb = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
     # Composite indexes for training job queries
     __table_args__ = (
-        Index('idx_ml_jobs_user_model', 'user_id', 'model_id'),
-        Index('idx_ml_jobs_model_status', 'model_id', 'status'),
-        Index('idx_ml_jobs_user_created', 'user_id', 'created_at'),
+        Index("idx_ml_jobs_user_model", "user_id", "model_id"),
+        Index("idx_ml_jobs_model_status", "model_id", "status"),
+        Index("idx_ml_jobs_user_created", "user_id", "created_at"),
     )
 
     def __repr__(self):
@@ -219,9 +247,14 @@ class BacktestResult(Base):
     __tablename__ = "backtest_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     strategy_id = Column(
-        Integer, ForeignKey("strategies.id", ondelete="SET NULL"), nullable=True, index=True
+        Integer,
+        ForeignKey("strategies.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
     # Backtest identification
@@ -276,7 +309,9 @@ class BacktestResult(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -284,10 +319,10 @@ class BacktestResult(Base):
 
     # Composite indexes for backtest queries
     __table_args__ = (
-        Index('idx_backtest_user_symbol', 'user_id', 'symbol', 'created_at'),
-        Index('idx_backtest_strategy_created', 'strategy_id', 'created_at'),
-        Index('idx_backtest_symbol_dates', 'symbol', 'start_date', 'end_date'),
-        Index('idx_backtest_user_status', 'user_id', 'status'),
+        Index("idx_backtest_user_symbol", "user_id", "symbol", "created_at"),
+        Index("idx_backtest_strategy_created", "strategy_id", "created_at"),
+        Index("idx_backtest_symbol_dates", "symbol", "start_date", "end_date"),
+        Index("idx_backtest_user_status", "user_id", "status"),
     )
 
     def __repr__(self):
@@ -330,14 +365,18 @@ class FeatureStore(Base):
     computation_time_ms = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    expires_at = Column(DateTime, nullable=True, index=True)  # TTL for cache invalidation
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    expires_at = Column(
+        DateTime, nullable=True, index=True
+    )  # TTL for cache invalidation
 
     # Composite indexes for feature store queries
     __table_args__ = (
-        Index('idx_feature_store_symbol_date_tf', 'symbol', 'date', 'timeframe'),
-        Index('idx_feature_store_symbol_hash', 'symbol', 'feature_hash'),  # For cache lookups
-        Index('idx_feature_store_expires', 'expires_at'),  # For cleanup queries
+        Index("idx_feature_store_symbol_date_tf", "symbol", "date", "timeframe"),
+        Index(
+            "idx_feature_store_symbol_hash", "symbol", "feature_hash"
+        ),  # For cache lookups
+        Index("idx_feature_store_expires", "expires_at"),  # For cleanup queries
     )
 
     def __repr__(self):

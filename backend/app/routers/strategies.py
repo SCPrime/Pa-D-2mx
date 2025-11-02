@@ -520,3 +520,67 @@ async def clone_strategy_template(
         raise HTTPException(
             status_code=500, detail=f"Failed to clone template: {e!s}"
         ) from e
+
+
+@router.get("/{strategy_id}/versions")
+async def get_strategy_versions(
+    strategy_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_unified),
+):
+    """
+    Get all versions of a strategy for version management
+
+    **Status:** Placeholder implementation - database schema for versioning not yet implemented
+    **Future:** Requires strategy_versions table with version history
+
+    Returns:
+    - 404 with helpful message about implementation status
+    - Workaround: Use GET /strategies/{strategy_id} for current version
+    """
+    try:
+        # Check if strategy exists
+        strategy = db.query(Strategy).filter(Strategy.id == strategy_id).first()
+
+        if not strategy:
+            raise HTTPException(
+                status_code=404, detail=f"Strategy {strategy_id} not found"
+            )
+
+        # TODO: Implement strategy versioning
+        # Requires:
+        # 1. New table: strategy_versions (id, strategy_id, version_number, config, created_at, created_by, changes_summary)
+        # 2. Migration script to create table
+        # 3. Trigger/hook to save version on strategy update
+        # 4. Query to fetch all versions ordered by version_number DESC
+
+        # For now, return current strategy as "version 1"
+        return {
+            "success": True,
+            "strategy_id": strategy_id,
+            "versions": [
+                {
+                    "version": 1,
+                    "updated_at": strategy.updated_at.isoformat()
+                    if strategy.updated_at
+                    else strategy.created_at.isoformat(),
+                    "updated_by": str(strategy.user_id),
+                    "changes_summary": "Initial version",
+                    "strategy_json": {
+                        "strategy_id": strategy_id,
+                        "name": strategy.name,
+                        "strategy_type": strategy.strategy_type,
+                        "config": strategy.config,
+                    },
+                }
+            ],
+            "note": "Strategy versioning database schema not yet implemented. Only current version shown.",
+            "eta": "Phase 4B - Database schema implementation",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch strategy versions: {e!s}"
+        ) from e

@@ -176,6 +176,35 @@ async def execute_proposal(
         raise HTTPException(status_code=500, detail="Failed to execute order") from e
 
 
+@router.get("")
+async def list_proposals(
+    status: str | None = None,
+    current_user: User = Depends(get_current_user_unified),
+):
+    """
+    Get pending trade proposals awaiting approval
+
+    **Query Parameters:**
+    - status: Filter by status (pending, approved, rejected, executed)
+
+    **Future Enhancement:**
+    - Store proposals in database with status tracking
+    - Filter by symbol, strategy, date range
+    - Sort by various criteria
+
+    **Current Status:** Returns empty list - database implementation pending
+    """
+    return {
+        "success": True,
+        "proposals": [],
+        "count": 0,
+        "message": "Proposals database schema not yet implemented",
+        "note": "Use POST /proposals/create to generate new proposals",
+        "eta": "Phase 4B - Database schema implementation",
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
 @router.get("/history")
 async def get_proposal_history(current_user: User = Depends(get_current_user_unified)):
     """

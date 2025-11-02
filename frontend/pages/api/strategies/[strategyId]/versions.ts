@@ -1,7 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-// TODO: Re-enable when strategies module is implemented
-// import type { Strategy } from "@/strategies/schema";
-type Strategy = unknown;
 
 /**
  * Strategy Versions Endpoint
@@ -9,15 +6,10 @@ type Strategy = unknown;
  * GET /api/strategies/[strategyId]/versions
  *
  * Returns all versions of a strategy for version management
+ *
+ * NOTE: This endpoint proxies to the backend API.
+ * Frontend should call backend directly in production.
  */
-
-interface StrategyVersion {
-  version: number;
-  updated_at: string;
-  updated_by: string;
-  changes_summary?: string;
-  strategy_json: Strategy;
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -31,75 +23,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const versions = await getStrategyVersions(strategyId);
+    const backendUrl = process.env.BACKEND_API_BASE_URL || process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL || "http://localhost:8002";
+    const apiToken = process.env.API_TOKEN || process.env.NEXT_PUBLIC_API_TOKEN;
 
-    if (versions.length === 0) {
-      return res.status(404).json({ error: "Strategy not found" });
+    const response = await fetch(`${backendUrl}/strategies/${strategyId}/versions`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiToken ? { "Authorization": `Bearer ${apiToken}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(404).json({ 
+          error: "Strategy not found",
+          note: "Backend endpoint may not be implemented yet"
+        });
+      }
+      
+      const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+      return res.status(response.status).json(errorData);
     }
 
-    res.status(200).json({
-      success: true,
-      strategyId,
-      versions,
-    });
+    const data = await response.json();
+    res.status(200).json(data);
   } catch (error) {
     console.error("Strategy versions fetch error:", error);
     res.status(500).json({
       error: "Failed to fetch strategy versions",
       detail: String(error),
+      note: "Check that backend API is running and accessible"
     });
   }
-}
-
-/**
- * Fetch all versions of a strategy (mock)
- */
-async function getStrategyVersions(strategyId: string): Promise<StrategyVersion[]> {
-  // Mock data - in production, query database:
-  // SELECT version, updated_at, updated_by, strategy_json
-  // FROM strategies
-  // WHERE strategy_id = $1
-  // ORDER BY version DESC
-
-  // Return empty if strategy doesn't exist
-  if (!strategyId.startsWith("micro_collar")) {
-    return [];
-  }
-
-  return [
-    {
-      version: 3,
-      updated_at: "2025-02-10T14:30:00Z",
-      updated_by: "mock_user_1",
-      changes_summary: "Increased max_concurrent_positions to 10",
-      strategy_json: {
-        strategy_id: strategyId,
-        name: "Micro Protective Collar – Sub-$4",
-        goal: "Income with capped downside on cheap stocks",
-        // ... full strategy JSON (would be complete in production)
-      } as Strategy,
-    },
-    {
-      version: 2,
-      updated_at: "2025-02-05T10:15:00Z",
-      updated_by: "mock_user_1",
-      changes_summary: "Tightened profit target to 8%",
-      strategy_json: {
-        strategy_id: strategyId,
-        name: "Micro Protective Collar – Sub-$4",
-        goal: "Income with capped downside on cheap stocks",
-      } as Strategy,
-    },
-    {
-      version: 1,
-      updated_at: "2025-01-15T10:00:00Z",
-      updated_by: "mock_user_1",
-      changes_summary: "Initial version",
-      strategy_json: {
-        strategy_id: strategyId,
-        name: "Micro Protective Collar – Sub-$4",
-        goal: "Income with capped downside on cheap stocks",
-      } as Strategy,
-    },
-  ];
 }

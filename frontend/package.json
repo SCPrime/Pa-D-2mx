@@ -26,15 +26,20 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
+    "@rainbow-me/rainbowkit": "^2.2.9",
     "@sentry/nextjs": "^7.118.0",
     "@types/d3": "^7.4.3",
     "@types/node": "^20.19.18",
     "@types/react": "^18.3.25",
     "@types/react-dom": "^18.3.7",
+    "@uniswap/sdk-core": "^7.8.0",
+    "@uniswap/smart-order-router": "^4.22.27",
+    "@uniswap/v3-sdk": "^3.26.0",
     "chart.js": "^4.5.1",
     "clsx": "^2.0.0",
     "d3": "^7.9.0",
     "date-fns": "^3.0.0",
+    "ethers": "^5.8.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "lightweight-charts": "^5.0.9",
@@ -52,7 +57,9 @@
     "recharts": "^2.10.3",
     "swr": "^2.2.4",
     "tailwind-merge": "^2.6.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "viem": "^2.38.6",
+    "wagmi": "^2.19.2"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.27.1",

@@ -444,8 +444,16 @@ async def execute(
 
 @router.post("/admin/kill")
 def kill(state: bool, current_user: User = Depends(get_current_user_unified)):
-    set_kill(state)
-    return {"tradingHalted": state}
+    """Emergency trading halt switch"""
+    try:
+        set_kill(state)
+        logger.info(f"[Kill Switch] Trading halted: {state}")
+        return {"tradingHalted": state}
+    except Exception as e:
+        logger.error(f"[Kill Switch] Failed to set kill switch: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to set trading halt: {e!s}"
+        ) from e
 
 
 # Order Template Models with Validation

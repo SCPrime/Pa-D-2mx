@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 interface EnhancedCardProps {
   children: React.ReactNode;
   className?: string;
-  variant?: "default" | "glass" | "gradient" | "elevated";
+  variant?: "default" | "glass" | "gradient" | "elevated" | "error";
   size?: "sm" | "md" | "lg" | "xl";
   hover?: boolean;
   glow?: boolean;
@@ -28,6 +28,7 @@ const EnhancedCard: React.FC<EnhancedCardProps> = ({
     default: "bg-slate-800/90 backdrop-blur-sm",
     glass: "bg-white/5 backdrop-blur-md border border-white/10",
     gradient: "bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm",
+    error: "bg-red-500/10 backdrop-blur-sm border border-red-500/30",
     elevated: "bg-slate-800/95 backdrop-blur-sm shadow-2xl",
   };
 

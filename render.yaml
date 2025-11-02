@@ -1,86 +1,41 @@
-services:
-  # Backend - FastAPI Python service
-  - type: web
-    name: paiid-backend
-    runtime: python
-    plan: free
-    region: oregon
-    branch: main
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt && python -m app.core.prelaunch --check-only
-    startCommand: bash start.sh
-    healthCheckPath: /api/health
-    autoDeploy: true
-    envVars:
-      - key: API_TOKEN
-        sync: false # Set via Render dashboard for security
-      # Alpaca API - PAPER TRADING EXECUTION ONLY (not for market data)
-      - key: ALPACA_PAPER_API_KEY
-        sync: false # Set via Render dashboard
-      - key: ALPACA_PAPER_SECRET_KEY
-        sync: false # Set via Render dashboard
-      - key: APCA_API_BASE_URL
-        value: https://paper-api.alpaca.markets
-      # Tradier API - MARKET DATA, NEWS, QUOTES (primary data source)
-      - key: TRADIER_API_KEY
-        sync: false # Set via Render dashboard
-      - key: TRADIER_ACCOUNT_ID
-        sync: false # Set via Render dashboard
-      - key: TRADIER_API_BASE_URL
-        value: https://api.tradier.com/v1
-      # Anthropic API - AI FALLBACK for market data when Tradier unavailable
-      - key: ANTHROPIC_API_KEY
-        sync: false # Set via Render dashboard for security - NEVER commit API keys!
-      - key: ALLOW_ORIGIN
-        value: https://paiid-frontend.onrender.com
-      - key: LIVE_TRADING
-        value: 'false'
-      - key: TRADING_MODE
-        value: paper
-      - key: REDIS_URL
-        generateValue: true
-      # Sentry Error Tracking - REQUIRED for production monitoring
-      - key: SENTRY_DSN
-        sync: false # REQUIRED for production - create free account at sentry.io
-      - key: SENTRY_ENVIRONMENT
-        value: production # Options: development, staging, production
-      # Logging Configuration
-      - key: LOG_LEVEL
-        value: INFO # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-      # Test Configuration (for deterministic Playwright tests)
-      - key: USE_TEST_FIXTURES
-        value: 'false'
+# Render.com Configuration for PaiiD-2mx
+# Testnet deployment configuration
 
-  # Frontend - Next.js Docker service
+services:
+  # Backend API
   - type: web
-    name: paiid-frontend
-    runtime: docker
-    plan: free
+    name: paiid-2mx-backend
+    env: python
     region: oregon
-    branch: main
-    rootDir: frontend
-    dockerfilePath: ./Dockerfile
-    dockerCommand: node server.js
+    plan: free
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
-      # API Tokens (both prefixed and non-prefixed for Next.js API routes)
-      - key: API_TOKEN
-        sync: false # Set via Render dashboard - CRITICAL for /api/proxy routes
-      - key: NEXT_PUBLIC_API_TOKEN
-        sync: false # Set via Render dashboard
-      # Backend API configuration
-      - key: NEXT_PUBLIC_BACKEND_API_BASE_URL
-        value: https://paiid-backend.onrender.com
-      - key: NEXT_PUBLIC_ANTHROPIC_API_KEY
-        sync: false # Set via Render dashboard
-      # Next.js configuration
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: '3000'
-      # Frontend Sentry Configuration
-      - key: NEXT_PUBLIC_SENTRY_DSN
-        sync: false # Set via Render dashboard
-      - key: NEXT_PUBLIC_SENTRY_ENVIRONMENT
-        value: production
-    healthCheckPath: /
-    autoDeploy: true
+      - key: ENVIRONMENT
+        value: testnet
+      - key: ETHEREUM_RPC_URL
+        value: https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161
+      - key: POLYGON_RPC_URL
+        value: https://rpc-mumbai.maticvigil.com
+      - key: BSC_RPC_URL
+        value: https://data-seed-prebsc-1-s1.binance.org:8545
+      - key: BASE_RPC_URL
+        value: https://goerli.base.org
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:3000,https://paiid-2mx.vercel.app
+      # Optional: Add ONEINCH_API_KEY from dashboard if you have one
+      # - key: ONEINCH_API_KEY
+      #   sync: false
+
+  # Frontend (Next.js) - Can also deploy to Render instead of Vercel
+  # - type: web
+  #   name: paiid-2mx-frontend
+  #   env: node
+  #   region: oregon
+  #   plan: free
+  #   buildCommand: cd frontend && npm install && npm run build
+  #   startCommand: cd frontend && npm start
+  #   envVars:
+  #     - key: NEXT_PUBLIC_DEX_BACKEND_URL
+  #       value: https://paiid-2mx-backend.onrender.com

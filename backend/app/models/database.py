@@ -5,7 +5,7 @@ SQLAlchemy models for PostgreSQL database.
 Defines schema for users, strategies, trades, performance tracking, and equity snapshots.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import (
@@ -48,9 +48,12 @@ class User(Base):
     alpaca_account_id = Column(String(100), unique=True, nullable=True, index=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
     last_login_at = Column(DateTime, nullable=True)
 
@@ -101,14 +104,16 @@ class UserSession(Base):
 
     # Session metadata
     expires_at = Column(DateTime, nullable=False, index=True)  # Refresh token expiry
-    last_activity_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_activity_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False
+    )
 
     # Audit trail
     ip_address = Column(String(45), nullable=True)  # IPv6 max length
     user_agent = Column(String(500), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationship
     user = relationship("User", back_populates="sessions")
@@ -148,7 +153,9 @@ class ActivityLog(Base):
     user_agent = Column(String(500), nullable=True)
 
     # Timestamp
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationship
     user = relationship("User", back_populates="activity_logs")
@@ -197,9 +204,12 @@ class Strategy(Base):
     max_drawdown = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
     last_backtest_at = Column(DateTime, nullable=True)
 
@@ -259,7 +269,9 @@ class Trade(Base):
     is_dry_run = Column(Boolean, default=False, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     filled_at = Column(DateTime, nullable=True)
     cancelled_at = Column(DateTime, nullable=True)
 
@@ -317,7 +329,7 @@ class Performance(Base):
     win_rate = Column(Float, nullable=True)
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Composite indexes for performance queries
     __table_args__ = (Index("idx_performance_user_date", "user_id", "date"),)
@@ -336,7 +348,9 @@ class EquitySnapshot(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Snapshot data
     equity = Column(Float, nullable=False)
@@ -375,9 +389,12 @@ class OrderTemplate(Base):
     limit_price = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
     last_used_at = Column(DateTime, nullable=True)
 
@@ -440,7 +457,9 @@ class AIRecommendation(Base):
     )  # 0-100, based on outcome vs prediction
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     expires_at = Column(DateTime, nullable=True)  # Recommendation expiry
 
     # Composite indexes for recommendation queries
@@ -473,7 +492,9 @@ class StrategyExecutionRecord(Base):
     trade_summary = Column(JSON, default=dict, nullable=False)
     execution_summary = Column(JSON, default=dict, nullable=False)
     execution = Column(JSON, default=list, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     __table_args__ = (
         Index("idx_strategy_exec_user_created", "user_id", "created_at"),

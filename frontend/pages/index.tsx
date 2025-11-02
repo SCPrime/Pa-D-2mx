@@ -1,962 +1,181 @@
 /**
- * PaiiD-2mx Trading Platform
+ * PaiiD 2MX - DEX/Blockchain Trading Platform
  * Copyright © 2025 Dr. SC Prime. All Rights Reserved.
- * 
+ *
  * PROPRIETARY AND CONFIDENTIAL
  * Unauthorized copying, modification, or distribution is strictly prohibited.
- * 🚨 THIS CODE IS MONITORED: Violators WILL be found.
  */
 
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import Split from "react-split";
-import RadialMenu, { Workflow, workflows } from "../components/RadialMenu";
+import Link from "next/link";
+import { useAccount } from "wagmi";
+import LoginForm from "../components/auth/LoginForm";
+import { TrendingTokens } from "../components/market/TrendingTokens";
+import { WalletButton } from "../components/wallet/WalletButton";
+import { useAuth } from "../hooks/useAuth";
 import { logger } from "../lib/logger";
-import { LOGO_ANIMATION_KEYFRAME } from "../styles/logoConstants";
 
-import ExecuteTradeForm from "../components/ExecuteTradeForm";
-import Settings from "../components/Settings";
-import UserSetupAI from "../components/UserSetupAI";
+export default function Home() {
+  // === AUTHENTICATION CHECK - ENFORCES LOGIN ON LAUNCH ===
+  const { user, isLoading: authLoading } = useAuth();
+  const { isConnected } = useAccount();
 
-// Dynamic imports for code splitting (loads only when needed)
-const MorningRoutineAI = dynamic(() => import("../components/MorningRoutineAI"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
-const AIRecommendations = dynamic(() => import("../components/AIRecommendations"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
-// Temporarily disabled - will be re-enabled when needed
-// const MonitorDashboard = dynamic(
-//   () => import("../components/MonitorDashboard").then((mod) => ({ default: mod.MonitorDashboard })),
-//   {
-//     loading: () => (
-//       <div className="flex items-center justify-center p-8">
-//         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-//       </div>
-//     ),
-//   }
-// );
-// const Analytics = dynamic(() => import("../components/Analytics"), {
-//   loading: () => (
-//     <div className="flex items-center justify-center p-8">
-//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-//     </div>
-//   ),
-// });
-const Backtesting = dynamic(() => import("../components/Backtesting"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
-const MLIntelligenceWorkflow = dynamic(
-  () => import("../components/workflows/MLIntelligenceWorkflow").then((mod) => ({ default: mod.MLIntelligenceWorkflow })),
-  {
-    loading: () => (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    ),
-  }
-);
-// Temporarily disabled - will be re-enabled when needed
-// const GitHubActionsMonitor = dynamic(() => import("../components/GitHubActionsMonitor"), {
-//   loading: () => (
-//     <div className="flex items-center justify-center p-8">
-//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-//     </div>
-//   ),
-// });
-const NewsReview = dynamic(() => import("../components/NewsReview"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
-const StrategyBuilderAI = dynamic(() => import("../components/StrategyBuilderAI"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
-const PositionManager = dynamic(() => import("../components/trading/PositionManager"), {
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    </div>
-  ),
-});
-
-import AIChat from "../components/AIChat";
-import CommandPalette from "../components/CommandPalette";
-import CompletePaiiDLogo from "../components/CompletePaiiDLogo";
-import HelpPanel from "../components/HelpPanel";
-import KeyboardShortcuts from "../components/KeyboardShortcuts";
-import MarketScanner from "../components/MarketScanner";
-import TradingModeIndicator from "../components/TradingModeIndicator";
-import LiveStatusChip from "../components/common/LiveStatusChip";
-import SimTimeBadge from "../components/common/SimTimeBadge";
-import StaleDataBanner from "../components/common/StaleDataBanner";
-import RiskCalculator from "../components/trading/RiskCalculator";
-import { ToastContainer, useToast } from "../components/ui/Toast";
-import { useIsMobile } from "../hooks/useBreakpoint";
-import { HelpProvider, useHelp } from "../hooks/useHelp";
-import { initializeSession } from "../lib/userManagement";
-
-export default function Dashboard() {
-  // Development bypass: Skip onboarding in development mode
-  const ENABLE_DEV_BYPASS = process.env.NODE_ENV === "development";
-
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string>("");
-  const [hoveredWorkflow, setHoveredWorkflow] = useState<Workflow | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [isUserSetup, setIsUserSetup] = useState(false); // Start with onboarding
-  const [isLoading, setIsLoading] = useState(true);
-  const [aiChatOpen, setAiChatOpen] = useState(false);
-  const [tradingMode, setTradingMode] = useState<"paper" | "live">("paper");
-  const [lastUpdatedMs, setLastUpdatedMs] = useState<number>(Date.now());
-  const [liveStatus] = useState<"live" | "reconnecting" | "stale">("live");
-
-  // Help system
-  const { isHelpPanelOpen, openHelpPanel, closeHelpPanel } = useHelp();
-
-  // Toast notifications
-  const toast = useToast();
-
-  // Detect mobile viewport
-  const isMobile = useIsMobile();
-
-  // Check if user is set up on mount
-  useEffect(() => {
-    const setupComplete =
-      typeof window !== "undefined"
-        ? localStorage.getItem("user-setup-complete") === "true"
-        : false;
-
-    setIsUserSetup(setupComplete);
-    setIsLoading(false);
-  }, []);
-
-  // Lightweight timer to refresh the lastUpdated timestamp (placeholder until real stream wiring)
-  useEffect(() => {
-    const t = setInterval(() => setLastUpdatedMs(Date.now()), 10000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Owner bypass keyboard combo (Ctrl+Shift+A or Cmd+Shift+A)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Ctrl+Shift+A (Windows/Linux) or Cmd+Shift+A (Mac)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "A") {
-        e.preventDefault();
-        logger.info("[PaiiD] 🔓 Admin bypass activated");
-
-        // Set localStorage flags
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user-setup-complete", "true");
-          localStorage.setItem("admin-bypass", "true");
-          localStorage.setItem("bypass-timestamp", new Date().toISOString());
-        }
-
-        // Skip onboarding
-        setIsUserSetup(true);
-        initializeSession();
-
-        // Show notification (you can replace with a toast library)
-        alert("🔓 Admin bypass activated! Welcome to PaiiD.");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Handle user setup completion
-  const handleUserSetupComplete = () => {
-    setIsUserSetup(true);
-    initializeSession();
-  };
-
-  // Show loading state briefly
-  if (isLoading) {
-    return null;
-  }
-
-  // Show user setup modal if not set up (unless development bypass is enabled)
-  if (!ENABLE_DEV_BYPASS && !isUserSetup) {
-    return <UserSetupAI onComplete={handleUserSetupComplete} />;
-  }
-
-  // TEMPORARILY DISABLED: Force radial menu on all devices for debugging
-  // Use mobile dashboard for mobile devices
-  // if (isMobile) {
-  //   return (
-  //     <MobileDashboard onWorkflowSelect={setSelectedWorkflow} selectedWorkflow={selectedWorkflow} />
-  //   );
-  // }
-
-  const getWorkflowById = (id: string) => {
-    return workflows.find((w) => w.id === id);
-  };
-
-  const displayWorkflow = selectedWorkflow ? getWorkflowById(selectedWorkflow) : hoveredWorkflow;
-
-  // Render the active workflow component or description
-  const renderWorkflowContent = () => {
-    // If a workflow is selected, render its component
-    if (selectedWorkflow) {
-      switch (selectedWorkflow) {
-        case "morning-routine":
-          return <MorningRoutineAI />;
-
-        case "active-positions":
-          return <PositionManager />;
-
-        case "execute":
-          return <ExecuteTradeForm />;
-
-        case "proposal-review":
-          return <RiskCalculator onCreateProposal={() => {}} onExecuteProposal={() => {}} />;
-
-        case "research":
-          return <MarketScanner />;
-
-        case "proposals":
-          return <AIRecommendations userId="user_1" />;
-
-        case "settings":
-          return <Settings isOpen={true} onClose={() => setSelectedWorkflow("")} />;
-
-        case "my-account":
-          // Simple financial chart view
-          return (
-            <div style={{ padding: "20px" }}>
-              <iframe
-                src="/my-account"
-                style={{ width: "100%", height: "90vh", border: "none", borderRadius: "20px" }}
-              />
-            </div>
-          );
-
-        case "news-review":
-          return <NewsReview />;
-
-        case "strategy-builder":
-          return <StrategyBuilderAI />;
-
-        case "backtesting":
-          return <Backtesting />;
-
-        case "dev-progress":
-          // Dev progress dashboard
-          return (
-            <div style={{ padding: "20px" }}>
-              <iframe
-                src="/progress"
-                style={{ width: "100%", height: "90vh", border: "none", borderRadius: "20px" }}
-              />
-            </div>
-          );
-
-        case "ml-intelligence":
-          return <MLIntelligenceWorkflow onClose={() => setSelectedWorkflow("")} />;
-
-        default:
-          return null;
-      }
-    }
-
-    // If hovering (but not selected), show description
-    if (displayWorkflow) {
-      return (
-        <div
-          style={{
-            background: "rgba(30, 41, 59, 0.8)",
-            backdropFilter: "blur(10px)",
-            border: `1px solid ${displayWorkflow.color}40`,
-            borderRadius: "16px",
-            padding: "20px",
-            minHeight: "100px",
-            animation: "slideUp 0.4s ease-out",
-          }}
-        >
-          {/* Stale data banner (appears if updates exceed threshold) */}
-          <div style={{ position: "absolute", top: ENABLE_DEV_BYPASS ? 48 : 8, left: 8, right: 8, zIndex: 20 }}>
-            <StaleDataBanner lastUpdatedMs={lastUpdatedMs} />
-          </div>
-          <h4
-            style={{
-              color: displayWorkflow.color,
-              fontSize: "1.1rem",
-              margin: 0,
-              marginBottom: "10px",
-            }}
-          >
-            {displayWorkflow.icon} {displayWorkflow.name.replace("\n", " ")}
-          </h4>
-          <p
-            style={{
-              color: "#cbd5e1",
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            {displayWorkflow.description}
-          </p>
-        </div>
-      );
-    }
-
-    // Default welcome message
+  // Show loading during auth check
+  if (authLoading) {
     return (
-      <div
-        style={{
-          background: "rgba(30, 41, 59, 0.8)",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          borderRadius: "16px",
-          padding: "20px",
-          minHeight: "100px",
-        }}
-      >
-        <h4
-          style={{
-            color: "#7E57C2",
-            fontSize: "1.1rem",
-            margin: 0,
-            marginBottom: "10px",
-          }}
-        >
-          Welcome to Your Trading Dashboard
-        </h4>
-        <p
-          style={{
-            color: "#cbd5e1",
-            lineHeight: 1.5,
-            margin: 0,
-          }}
-        >
-          Select a workflow stage from the radial menu above to begin. Each segment represents a key
-          phase in your trading routine, from morning market analysis to strategy execution.
-        </p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-400 text-lg">Loading PaiiD 2MX...</p>
+        </div>
       </div>
     );
-  };
+  }
+
+  // === LOGIN ENFORCEMENT - SHOW LOGIN PAGE IF NOT AUTHENTICATED ===
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">Welcome to PaiiD 2MX</h1>
+            <p className="text-slate-400">DEX Trading Platform</p>
+          </div>
+          <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-8 shadow-2xl">
+            <LoginForm
+              onSuccess={() => {
+                logger.info("[PaiiD-2mx] User logged in successfully");
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <HelpProvider>
-      {/* Skip to main content link for keyboard navigation */}
-      <a
-        href="#main-content"
-        style={{
-          position: "absolute",
-          left: "-10000px",
-          top: "auto",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden",
-          zIndex: 10000,
-          background: "#3b82f6",
-          color: "#fff",
-          padding: "8px 16px",
-          borderRadius: "4px",
-          textDecoration: "none",
-          fontWeight: "600",
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.position = "fixed";
-          e.currentTarget.style.top = "10px";
-          e.currentTarget.style.left = "10px";
-          e.currentTarget.style.width = "auto";
-          e.currentTarget.style.height = "auto";
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.position = "absolute";
-          e.currentTarget.style.left = "-10000px";
-          e.currentTarget.style.top = "auto";
-          e.currentTarget.style.width = "1px";
-          e.currentTarget.style.height = "1px";
-        }}
-      >
-        Skip to main content
-      </a>
-
-      {/* Command Palette (Cmd+K) */}
-      <CommandPalette onNavigate={setSelectedWorkflow} />
-
-      {/* Development Mode Banner */}
-      {ENABLE_DEV_BYPASS && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            background: "linear-gradient(90deg, #f59e0b 0%, #ef4444 100%)",
-            color: "#fff",
-            padding: "8px 16px",
-            textAlign: "center",
-            fontSize: "13px",
-            fontWeight: "600",
-            zIndex: 9999,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-          }}
-        >
-          🔧 DEVELOPMENT MODE | Onboarding Bypass Active | Press Ctrl+Shift+A for Manual Toggle
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
+      <header className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-white">PaiiD 2MX</h1>
+            <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-semibold rounded-full border border-blue-500/30">
+              DEX Platform
+            </span>
+          </div>
+          <WalletButton />
         </div>
-      )}
+      </header>
 
-      {!selectedWorkflow ? (
-        // Full screen view when no workflow selected
-        <main
-          id="main-content"
-          style={{
-            width: "100vw",
-            height: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
-            overflow: "hidden",
-            padding: 0,
-            margin: 0,
-            position: "relative",
-            paddingTop: ENABLE_DEV_BYPASS ? "40px" : "0",
-          }}
-        >
-          <h1
-            style={{
-              position: "absolute",
-              left: "-10000px",
-              width: "1px",
-              height: "1px",
-              overflow: "hidden",
-            }}
-          >
-            PaiiD Trading Dashboard - Workflow Navigation
-          </h1>
-          {/* Radial Menu Container - centered and scaled to fit */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              maxHeight: "calc(100vh - 60px)",
-              overflow: "hidden",
-              paddingTop: "0",
-              paddingBottom: "0",
-            }}
-          >
-            <div
-              style={{
-                transform: "scale(0.65)",
-                transformOrigin: "center center",
-              }}
-            >
-              <RadialMenu
-                onWorkflowSelect={setSelectedWorkflow}
-                onWorkflowHover={setHoveredWorkflow}
-              />
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-5xl font-bold text-white mb-6">Decentralized Exchange Trading</h2>
+          <p className="text-xl text-slate-300 mb-8">
+            Trade crypto with multi-chain support, best price aggregation, and zero monthly costs.
+          </p>
+          {!isConnected && (
+            <div className="flex justify-center">
+              <WalletButton />
             </div>
+          )}
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <Link href="/wallet-demo">
+            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer">
+              <div className="text-4xl mb-4">🔗</div>
+              <h3 className="text-xl font-semibold text-white mb-2">Wallet Integration</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                Connect MetaMask, WalletConnect, or Coinbase Wallet. Multi-chain support for ETH,
+                Polygon, BSC, and Base.
+              </p>
+              <div className="text-blue-400 text-sm font-semibold">Try Demo →</div>
+            </div>
+          </Link>
+
+          <Link href="/dex-demo">
+            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer">
+              <div className="text-4xl mb-4">🔄</div>
+              <h3 className="text-xl font-semibold text-white mb-2">DEX Swaps</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                Get best prices from Uniswap V3. Multi-DEX aggregation finds optimal routes
+                automatically.
+              </p>
+              <div className="text-blue-400 text-sm font-semibold">Try Demo →</div>
+            </div>
+          </Link>
+
+          <Link href="/market-demo">
+            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-xl font-semibold text-white mb-2">Market Data</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                Real-time crypto prices and trending tokens powered by CoinGecko. Free tier with
+                1-minute caching.
+              </p>
+              <div className="text-blue-400 text-sm font-semibold">Try Demo →</div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Trending Tokens */}
+        <div className="max-w-2xl mx-auto">
+          <TrendingTokens />
+        </div>
+      </section>
+
+      {/* Features List */}
+      <section className="max-w-7xl mx-auto px-6 py-16 border-t border-slate-700/50">
+        <h2 className="text-3xl font-bold text-white text-center mb-12">Platform Features</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-white mb-4">🔒 Security First</h3>
+            <ul className="space-y-2 text-slate-300 text-sm">
+              <li>✅ Private keys never leave your wallet</li>
+              <li>✅ Transaction approval required</li>
+              <li>✅ Slippage protection built-in</li>
+              <li>✅ Enterprise security guidelines</li>
+            </ul>
           </div>
 
-          {/* Bottom Info Bar - absolute positioned */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: "rgba(15, 24, 40, 0.95)",
-              backdropFilter: "blur(10px)",
-              borderTop: "1px solid rgba(16, 185, 129, 0.2)",
-              padding: isMobile ? "12px 16px" : "16px 24px",
-              display: "flex",
-              justifyContent: isMobile ? "center" : "space-between",
-              alignItems: "center",
-              zIndex: 10,
-              flexDirection: isMobile ? "column" : "row",
-              gap: isMobile ? "8px" : "0",
-            }}
-          >
-            {/* Status area (left) */}
-            {!isMobile && (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <LiveStatusChip status={liveStatus} lastUpdatedMs={lastUpdatedMs} />
-                <SimTimeBadge simTime={new Date()} mode="live" />
-              </div>
-            )}
-
-            {/* Keyboard Hints - hide on mobile (touch devices don't use keyboard) */}
-            {!isMobile && (
-              <div
-                style={{
-                  fontSize: "0.875rem",
-                  color: "#94a3b8",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                }}
-              >
-                <span>
-                  <kbd
-                    style={{
-                      background: "rgba(255, 255, 255, 0.1)",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontFamily: "monospace",
-                      color: "#e2e8f0",
-                      marginRight: "4px",
-                    }}
-                  >
-                    Tab
-                  </kbd>
-                  focus
-                </span>
-                <span>
-                  <kbd
-                    style={{
-                      background: "rgba(255, 255, 255, 0.1)",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontFamily: "monospace",
-                      color: "#e2e8f0",
-                      marginRight: "4px",
-                    }}
-                  >
-                    Enter
-                  </kbd>
-                  select
-                </span>
-                <span>
-                  <kbd
-                    style={{
-                      background: "rgba(255, 255, 255, 0.1)",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontFamily: "monospace",
-                      color: "#e2e8f0",
-                      marginRight: "4px",
-                    }}
-                  >
-                    ← →
-                  </kbd>
-                  rotate
-                </span>
-                <span>
-                  <kbd
-                    style={{
-                      background: "rgba(26, 117, 96, 0.2)",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontFamily: "monospace",
-                      color: "#45f0c0",
-                      marginRight: "4px",
-                      boxShadow: "0 0 8px rgba(69, 240, 192, 0.3)",
-                    }}
-                  >
-                    Ctrl+Shift+A
-                  </kbd>
-                  admin
-                </span>
-              </div>
-            )}
-
-            {/* Hover Description */}
-            <div
-              style={{
-                color: "#cbd5e1",
-                fontSize: isMobile ? "12px" : "14px",
-                fontStyle: "italic",
-                maxWidth: isMobile ? "100%" : "300px",
-                textAlign: isMobile ? "center" : "right",
-                padding: isMobile ? "0 8px" : "0",
-              }}
-            >
-              {hoveredWorkflow
-                ? hoveredWorkflow.description
-                : isMobile
-                  ? "Tap a segment"
-                  : "Hover over segments for details"}
-            </div>
-          </div>
-        </main>
-      ) : isMobile ? (
-        // Mobile: Stacked layout (no split view)
-        <main
-          id="main-content"
-          style={{
-            width: "100%",
-            height: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
-            overflow: "hidden",
-          }}
-        >
-          <h1
-            style={{
-              position: "absolute",
-              left: "-10000px",
-              width: "1px",
-              height: "1px",
-              overflow: "hidden",
-            }}
-          >
-            PaiiD Trading Dashboard
-          </h1>
-          {/* Mobile Header with Back Button */}
-          <div
-            style={{
-              padding: "12px 16px",
-              background: "rgba(15, 24, 40, 0.95)",
-              borderBottom: "1px solid rgba(16, 185, 129, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              minHeight: "56px",
-            }}
-          >
-            {/* Back Button */}
-            <button
-              onClick={() => setSelectedWorkflow("")}
-              aria-label="Return to workflow navigation menu"
-              type="button"
-              style={{
-                background: "rgba(16, 185, 129, 0.1)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                color: "#10b981",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              ← Menu
-            </button>
-
-            {/* Current Workflow Title */}
-            {displayWorkflow && (
-              <div
-                style={{
-                  flex: 1,
-                  fontSize: "16px",
-                  fontWeight: "700",
-                  color: displayWorkflow.color,
-                }}
-              >
-                {displayWorkflow.icon} {displayWorkflow.name.replace("\n", " ")}
-              </div>
-            )}
+          <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-white mb-4">💰 Zero Cost</h3>
+            <ul className="space-y-2 text-slate-300 text-sm">
+              <li>✅ Free RPC endpoints (4 chains)</li>
+              <li>✅ CoinGecko free tier (50 calls/min)</li>
+              <li>✅ WalletConnect free (unlimited)</li>
+              <li>✅ Open source SDKs (Uniswap, wagmi)</li>
+            </ul>
           </div>
 
-          {/* Workflow Content - Full Width */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              overflowX: "hidden",
-              padding: "16px",
-              color: "#e2e8f0",
-            }}
-          >
-            {renderWorkflowContent()}
+          <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-white mb-4">⚡ Performance</h3>
+            <ul className="space-y-2 text-slate-300 text-sm">
+              <li>✅ Real-time quotes (&lt;1s)</li>
+              <li>✅ Built-in caching (1min)</li>
+              <li>✅ Multi-DEX aggregation</li>
+              <li>✅ Auto-refresh market data</li>
+            </ul>
           </div>
-        </main>
-      ) : (
-        // Desktop/Tablet: Split view when workflow selected
-        <Split
-          sizes={[40, 60]}
-          minSize={[350, 400]}
-          expandToMin={false}
-          gutterSize={8}
-          gutterAlign="center"
-          snapOffset={30}
-          dragInterval={1}
-          direction="horizontal"
-          cursor="col-resize"
-          className="split"
-        >
-          {/* Left panel - radial menu with header */}
-          <aside
-            role="complementary"
-            aria-label="Workflow navigation menu"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100vh",
-              background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
-              overflow: "hidden",
-            }}
-          >
-            {/* Header with Logo, Help, and Trading Mode */}
-            <div
-              style={{
-                padding: "20px 16px 10px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              {/* Logo */}
-              <CompletePaiiDLogo size={64} />
 
-              {/* Help Button */}
-              <button
-                onClick={openHelpPanel}
-                aria-label="Open help panel"
-                type="button"
-                style={{
-                  background: "rgba(59, 130, 246, 0.1)",
-                  border: "1px solid rgba(59, 130, 246, 0.3)",
-                  borderRadius: "8px",
-                  padding: "8px 12px",
-                  color: "#3b82f6",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(59, 130, 246, 0.2)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                ❓ Help
-              </button>
+          <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-white mb-4">🎨 Beautiful UI</h3>
+            <ul className="space-y-2 text-slate-300 text-sm">
+              <li>✅ Glassmorphism design</li>
+              <li>✅ Responsive (mobile + desktop)</li>
+              <li>✅ RainbowKit wallet UI</li>
+              <li>✅ Real-time updates</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
-              {/* Trading Mode Indicator */}
-              <TradingModeIndicator mode={tradingMode} onModeChange={setTradingMode} />
-            </div>
-
-            {/* Radial Menu */}
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  transform: "scale(0.5)",
-                  transformOrigin: "center center",
-                }}
-              >
-                <RadialMenu
-                  onWorkflowSelect={setSelectedWorkflow}
-                  onWorkflowHover={setHoveredWorkflow}
-                  selectedWorkflow={selectedWorkflow}
-                  compact={true}
-                />
-              </div>
-            </div>
-          </aside>
-
-          {/* Right panel - workflow content */}
-          <main
-            id="main-content"
-            style={{
-              overflowY: "auto",
-              overflowX: "hidden",
-              height: "100vh",
-              background: "linear-gradient(135deg, #0f1828 0%, #1a2a3f 100%)",
-              padding: "20px",
-              color: "#e2e8f0",
-            }}
-          >
-            <h1
-              style={{
-                position: "absolute",
-                left: "-10000px",
-                width: "1px",
-                height: "1px",
-                overflow: "hidden",
-              }}
-            >
-              {displayWorkflow
-                ? `${displayWorkflow.name.replace("\n", " ")} Workflow`
-                : "PaiiD Trading Dashboard"}
-            </h1>
-            {renderWorkflowContent()}
-          </main>
-        </Split>
-      )}
-
-      {/* Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.6;
-            transform: scale(1.2);
-          }
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(100px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        ${LOGO_ANIMATION_KEYFRAME}
-
-        /* React-split gutter styles - Claude-inspired */
-        :global(.split-container) {
-          width: 100%;
-        }
-
-        :global(.gutter) {
-          background-color: rgba(30, 41, 59, 0.8) !important;
-          background-repeat: no-repeat;
-          background-position: center;
-          transition: all 0.2s ease;
-          border: none !important;
-          position: relative;
-          backdrop-filter: blur(10px);
-        }
-
-        :global(.gutter:hover) {
-          background-color: rgba(16, 185, 129, 0.15) !important;
-        }
-
-        :global(.gutter:active) {
-          background-color: rgba(16, 185, 129, 0.25) !important;
-        }
-
-        :global(.gutter-horizontal) {
-          cursor: col-resize !important;
-          position: relative;
-        }
-
-        /* Grip indicator - vertical dots like Claude */
-        :global(.gutter-horizontal::before) {
-          content: "";
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          width: 3px;
-          height: 40px;
-          background: linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(16, 185, 129, 0.4) 20%,
-            rgba(16, 185, 129, 0.6) 50%,
-            rgba(16, 185, 129, 0.4) 80%,
-            transparent 100%
-          );
-          border-radius: 2px;
-          transition: all 0.2s ease;
-        }
-
-        :global(.gutter-horizontal:hover::before) {
-          background: linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(16, 185, 129, 0.6) 20%,
-            rgba(16, 185, 129, 0.9) 50%,
-            rgba(16, 185, 129, 0.6) 80%,
-            transparent 100%
-          );
-          height: 60px;
-          box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-        }
-
-        :global(.gutter-horizontal:active::before) {
-          background: rgba(16, 185, 129, 1);
-          height: 80px;
-          box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-        }
-
-        :global(.left-panel),
-        :global(.right-panel) {
-          overflow-y: auto;
-          height: 100vh;
-        }
-      `}</style>
-
-      {/* Settings Modal */}
-      <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
-
-      {/* AI Chat Modal */}
-      <AIChat
-        isOpen={aiChatOpen}
-        onClose={() => setAiChatOpen(false)}
-        initialMessage="Hi! I'm your PaiiD AI assistant. I can help you with trading strategies, build custom workflows, analyze market data, or adjust your preferences. What would you like to know?"
-      />
-
-      {/* Keyboard Shortcuts */}
-      <KeyboardShortcuts
-        onOpenTrade={() => setSelectedWorkflow("execute")}
-        onQuickBuy={() => setSelectedWorkflow("execute")}
-        onQuickSell={() => setSelectedWorkflow("execute")}
-        onCloseModal={() => setSelectedWorkflow("")}
-      />
-
-      {/* Help Panel */}
-      <HelpPanel isOpen={isHelpPanelOpen} onClose={closeHelpPanel} />
-
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
-    </HelpProvider>
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto px-6 py-8 text-center text-slate-400 text-sm border-t border-slate-700/50">
+        <p>© 2025 Dr. SC Prime. All Rights Reserved. | PaiiD 2MX - DEX Trading Platform</p>
+      </footer>
+    </div>
   );
 }

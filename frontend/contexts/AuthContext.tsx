@@ -156,7 +156,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await authApi.logout(tokens.accessToken);
       } catch (error) {
         // Ignore errors, we already cleared local state
-        logger.warn("Server logout failed", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.warn("Server logout failed", { error: errorMessage });
       }
     }
 

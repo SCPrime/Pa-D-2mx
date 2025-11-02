@@ -1,20 +1,21 @@
 import type { AppProps } from "next/app";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
-import { TelemetryProvider } from "../components/TelemetryProvider";
-import { ChatProvider, useChat } from "../components/ChatContext";
-import { WorkflowProvider } from "../contexts/WorkflowContext";
-import { AuthProvider } from "../contexts/AuthContext";
-import { ThemeProvider } from "../contexts/ThemeContext";
 import AIChatBot from "../components/AIChatBot";
+import { ChatProvider, useChat } from "../components/ChatContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { GlowStyleProvider } from "../contexts/GlowStyleContext";
-import { HelpProvider } from "../hooks/useHelp";
-import { initSentry, setUser } from "../lib/sentry";
 import StoryboardCanvas from "../components/StoryboardCanvas";
-import { getHotkeyManager, DEFAULT_HOTKEYS } from "../lib/hotkeyManager";
-import "../styles/globals.css";
+import { TelemetryProvider } from "../components/TelemetryProvider";
+import { AuthProvider } from "../contexts/AuthContext";
+import { GlowStyleProvider } from "../contexts/GlowStyleContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { WalletProvider } from "../contexts/WalletContext";
+import { WorkflowProvider } from "../contexts/WorkflowContext";
+import { HelpProvider } from "../hooks/useHelp";
+import { DEFAULT_HOTKEYS, getHotkeyManager } from "../lib/hotkeyManager";
+import { initSentry, setUser } from "../lib/sentry";
 import "../styles/animations.css";
+import "../styles/globals.css";
 
 interface AppPropsExtended {
   Component: AppProps["Component"];
@@ -39,24 +40,24 @@ function AppContent({
 
   // Initialize hotkey manager
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const hotkeyManager = getHotkeyManager();
 
     // Register storyboard hotkey
-    hotkeyManager.register('storyboard', {
+    hotkeyManager.register("storyboard", {
       ...DEFAULT_HOTKEYS.STORYBOARD,
       action: () => setIsStoryboardOpen(true),
     });
 
     // Register AI chat hotkey
-    hotkeyManager.register('ai-chat', {
+    hotkeyManager.register("ai-chat", {
       ...DEFAULT_HOTKEYS.AI_CHAT,
       action: () => openChat(),
     });
 
     // Register close modal hotkey
-    hotkeyManager.register('close-modal', {
+    hotkeyManager.register("close-modal", {
       ...DEFAULT_HOTKEYS.CLOSE_MODAL,
       action: () => {
         if (isStoryboardOpen) setIsStoryboardOpen(false);
@@ -65,9 +66,9 @@ function AppContent({
     });
 
     return () => {
-      hotkeyManager.unregister('storyboard');
-      hotkeyManager.unregister('ai-chat');
-      hotkeyManager.unregister('close-modal');
+      hotkeyManager.unregister("storyboard");
+      hotkeyManager.unregister("ai-chat");
+      hotkeyManager.unregister("close-modal");
     };
   }, [isStoryboardOpen, isChatOpen, closeChat, openChat]);
 
@@ -102,11 +103,11 @@ function AppContent({
 
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, dragOffset]);
@@ -117,9 +118,7 @@ function AppContent({
       <AIChatBot isOpen={isChatOpen} onClose={closeChat} />
 
       {/* Storyboard Canvas */}
-      {isStoryboardOpen && (
-        <StoryboardCanvas onClose={() => setIsStoryboardOpen(false)} />
-      )}
+      {isStoryboardOpen && <StoryboardCanvas onClose={() => setIsStoryboardOpen(false)} />}
 
       {/* Floating Storyboard Button */}
       {!isStoryboardOpen && (
@@ -127,35 +126,35 @@ function AppContent({
           onMouseDown={handleMouseDown}
           onClick={() => !isDragging && setIsStoryboardOpen(true)}
           style={{
-            position: 'fixed',
+            position: "fixed",
             bottom: `${window.innerHeight - buttonPosition.y - 60}px`,
             right: `${window.innerWidth - buttonPosition.x - 60}px`,
-            width: '60px',
-            height: '60px',
-            backgroundColor: 'rgba(99, 102, 241, 0.9)',
-            border: '2px solid rgba(129, 140, 248, 0.5)',
-            borderRadius: '50%',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-            color: 'white',
-            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+            width: "60px",
+            height: "60px",
+            backgroundColor: "rgba(99, 102, 241, 0.9)",
+            border: "2px solid rgba(129, 140, 248, 0.5)",
+            borderRadius: "50%",
+            cursor: isDragging ? "grabbing" : "grab",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "24px",
+            color: "white",
+            boxShadow: "0 8px 24px rgba(99, 102, 241, 0.4)",
             zIndex: 9999,
-            transition: isDragging ? 'none' : 'transform 0.2s, box-shadow 0.2s',
-            transform: isDragging ? 'scale(1.1)' : 'scale(1)',
+            transition: isDragging ? "none" : "transform 0.2s, box-shadow 0.2s",
+            transform: isDragging ? "scale(1.1)" : "scale(1)",
           }}
           onMouseEnter={(e) => {
             if (!isDragging) {
-              e.currentTarget.style.transform = 'scale(1.1)';
-              e.currentTarget.style.boxShadow = '0 12px 32px rgba(99, 102, 241, 0.6)';
+              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.boxShadow = "0 12px 32px rgba(99, 102, 241, 0.6)";
             }
           }}
           onMouseLeave={(e) => {
             if (!isDragging) {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.4)';
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(99, 102, 241, 0.4)";
             }
           }}
           title="Storyboard Mode (Ctrl+Shift+S)"
@@ -252,21 +251,23 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <ThemeProvider>
         <GlowStyleProvider>
-          <HelpProvider>
-            <AuthProvider>
-              <ChatProvider>
-                <WorkflowProvider>
-                  <AppContent
-                    Component={Component}
-                    pageProps={pageProps}
-                    userId={user.id}
-                    userRole={user.role}
-                    telemetryEnabled={telemetryEnabled}
-                  />
-                </WorkflowProvider>
-              </ChatProvider>
-            </AuthProvider>
-          </HelpProvider>
+          <WalletProvider>
+            <HelpProvider>
+              <AuthProvider>
+                <ChatProvider>
+                  <WorkflowProvider>
+                    <AppContent
+                      Component={Component}
+                      pageProps={pageProps}
+                      userId={user.id}
+                      userRole={user.role}
+                      telemetryEnabled={telemetryEnabled}
+                    />
+                  </WorkflowProvider>
+                </ChatProvider>
+              </AuthProvider>
+            </HelpProvider>
+          </WalletProvider>
         </GlowStyleProvider>
       </ThemeProvider>
     </ErrorBoundary>

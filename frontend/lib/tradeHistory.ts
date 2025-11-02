@@ -6,7 +6,7 @@
  * User has full control over autopilot settings.
  */
 
-import { logger } from './logger';
+import { logger } from "./logger";
 
 export interface TradeRecord {
   id: string;
@@ -42,19 +42,19 @@ export interface StrategyPerformance {
 /**
  * LocalStorage keys for persistence
  */
-const TRADE_HISTORY_KEY = 'paiid_trade_history';
-const PERFORMANCE_CACHE_KEY = 'paiid_performance_cache';
+const TRADE_HISTORY_KEY = "paiid_trade_history";
+const PERFORMANCE_CACHE_KEY = "paiid_performance_cache";
 
 /**
  * Load trade history from localStorage
  */
 function loadTradeHistory(): TradeRecord[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const stored = localStorage.getItem(TRADE_HISTORY_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    logger.error('Failed to load trade history from localStorage', error);
+    logger.error("Failed to load trade history from localStorage", error);
     return [];
   }
 }
@@ -63,11 +63,11 @@ function loadTradeHistory(): TradeRecord[] {
  * Save trade history to localStorage
  */
 function saveTradeHistory(trades: TradeRecord[]): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(TRADE_HISTORY_KEY, JSON.stringify(trades));
   } catch (error) {
-    logger.error('Failed to save trade history to localStorage', error);
+    logger.error("Failed to save trade history to localStorage", error);
   }
 }
 
@@ -75,12 +75,12 @@ function saveTradeHistory(trades: TradeRecord[]): void {
  * Load performance cache from localStorage
  */
 function loadPerformanceCache(): Record<string, StrategyPerformance> {
-  if (typeof window === 'undefined') return {};
+  if (typeof window === "undefined") return {};
   try {
     const stored = localStorage.getItem(PERFORMANCE_CACHE_KEY);
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
-    logger.error('Failed to load performance cache from localStorage', error);
+    logger.error("Failed to load performance cache from localStorage", error);
     return {};
   }
 }
@@ -89,11 +89,11 @@ function loadPerformanceCache(): Record<string, StrategyPerformance> {
  * Save performance cache to localStorage
  */
 function savePerformanceCache(cache: Record<string, StrategyPerformance>): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(PERFORMANCE_CACHE_KEY, JSON.stringify(cache));
   } catch (error) {
-    logger.error('Failed to save performance cache to localStorage', error);
+    logger.error("Failed to save performance cache to localStorage", error);
   }
 }
 
@@ -203,7 +203,6 @@ export function getStrategyPerformance(strategyId: string): StrategyPerformance 
   };
 
   // Cache the result
-  const perfCache = loadPerformanceCache();
   perfCache[strategyId] = performance;
   savePerformanceCache(perfCache);
 
@@ -322,10 +321,10 @@ export function seedMockTradeData(strategyId: string, userId: string) {
  * Clear all trade history (for testing)
  */
 export function clearTradeHistory() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.removeItem(TRADE_HISTORY_KEY);
   localStorage.removeItem(PERFORMANCE_CACHE_KEY);
-  logger.info('Cleared all trade history from localStorage');
+  logger.info("Cleared all trade history from localStorage");
 }
 
 /**

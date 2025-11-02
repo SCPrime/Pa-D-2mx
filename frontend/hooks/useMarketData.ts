@@ -1,221 +1,176 @@
+/**
+ * useMarketData Hook
+ * React hook for fetching crypto market data
+ */
+
 import { useCallback, useEffect, useState } from "react";
-import { throttle } from "lodash";
-import { logger } from "../lib/logger";
+import { coinGecko, CoinGeckoToken, TrendingCoin } from "../lib/market-data/coingecko";
 
-export interface MarketDataState {
-  dow: { value: number; change: number; symbol: string };
-  nasdaq: { value: number; change: number; symbol: string };
-  lastUpdate: number;
+interface UseMarketDataReturn {
+  tokens: CoinGeckoToken[];
+  trending: TrendingCoin[];
+  isLoading: boolean;
+  error: Error | null;
+  refreshTokens: () => Promise<void>;
+  refreshTrending: () => Promise<void>;
+  searchTokens: (query: string) => Promise<any>;
 }
 
-export interface MarketStatus {
-  is_open: boolean;
-  state: string;
-  description: string;
-}
+export function useMarketData(tokenIds?: string[]): UseMarketDataReturn {
+  const [tokens, setTokens] = useState<CoinGeckoToken[]>([]);
+  const [trending, setTrending] = useState<TrendingCoin[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-export function useMarketData() {
-  const [marketData, setMarketData] = useState<MarketDataState>({
-    dow: { value: 0, change: 0, symbol: "DJI" },
-    nasdaq: { value: 0, change: 0, symbol: "COMP" },
-    lastUpdate: 0,
-  });
-  const [forceFieldConfidence, setForceFieldConfidence] = useState(0);
-  const [isMarketDataLoading, setIsMarketDataLoading] = useState(true);
-  const [sseConnected, setSseConnected] = useState(false);
-  const [sseRetryCount, setSseRetryCount] = useState(0);
-  const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
+  // Fetch token market data
+  const refreshTokens = useCallback(async () => {
+    if (!tokenIds || tokenIds.length === 0) return;
 
-  // Throttled market data update - prevents excessive re-renders
-  // PERFORMANCE FIX: Reduced from 10000ms (10s) to 1000ms (1s) after fixing D3 re-render issue
-  // With optimized D3 rendering (market data values removed from main effect deps),
-  // we can update much more frequently without causing UI jank
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const throttledSetMarketData = useCallback(
-    throttle((newData: MarketDataState) => {
-      setMarketData(newData);
-      logger.info("[useMarketData] Market data updated (throttled)");
-    }, 1000), // Update max once per second (reduced from 10s)
-    []
-  );
+    setIsLoading(true);
+    setError(null);
 
-  // Real-time streaming: SSE for market data with auto-reconnection
+    try {
+      const data = await coinGecko.getTokensMarketData(tokenIds);
+      setTokens(data);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setError(error);
+      console.error("Failed to fetch token data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tokenIds]);
+
+  // Fetch trending tokens
+  const refreshTrending = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await coinGecko.getTrendingTokens();
+      setTrending(data);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setError(error);
+      console.error("Failed to fetch trending tokens:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Search tokens
+  const searchTokens = useCallback(async (query: string) => {
+    if (!query) return [];
+
+    try {
+      const results = await coinGecko.searchTokens(query);
+      return results;
+    } catch (err) {
+      console.error("Failed to search tokens:", err);
+      return [];
+    }
+  }, []);
+
+  // Auto-fetch on mount and when tokenIds change
   useEffect(() => {
-    let eventSource: EventSource | null = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
-    let isUnmounted = false;
+    refreshTokens();
+  }, [refreshTokens]);
 
-    // Load cached market data on mount
-    const loadCachedData = () => {
-      try {
-        const cached = localStorage.getItem("paiid-market-data");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          // Only use cache if it's less than 24 hours old
-          if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            logger.info("[useMarketData] Loading cached market data from localStorage");
-            setMarketData(parsed.data);
-            setIsMarketDataLoading(false);
-          }
-        }
-      } catch (error) {
-        logger.error("[useMarketData] Failed to load cached market data", error);
-      }
-    };
+  // Auto-fetch trending on mount
+  useEffect(() => {
+    refreshTrending();
 
-    // SSE connection with exponential backoff retry
-    const connectSSE = (retryAttempt = 0) => {
-      if (isUnmounted) return;
-
-      const maxRetries = 10;
-      const baseDelay = 2000; // 2 seconds
-
-      if (retryAttempt >= maxRetries) {
-        logger.error("[useMarketData] Max SSE retry attempts reached. Giving up.");
-        setIsMarketDataLoading(false);
-        return;
-      }
-
-      logger.info(
-        `[useMarketData] Connecting to SSE stream (attempt ${retryAttempt + 1}/${maxRetries})...`
-      );
-      setSseRetryCount(retryAttempt);
-
-      try {
-        eventSource = new EventSource("/api/proxy/stream/market-indices");
-
-        eventSource.addEventListener("indices_update", (e) => {
-          let data;
-          try {
-            data = JSON.parse(e.data);
-          } catch (error) {
-            logger.error("[useMarketData] Failed to parse SSE indices_update data", { error, raw: e.data });
-            return; // Skip this malformed update
-          }
-          logger.debug("[useMarketData] Received live market data", { data });
-
-          const now = Date.now();
-          const newData: MarketDataState = {
-            dow: {
-              value: data.dow?.last || 0,
-              change: data.dow?.changePercent || 0,
-              symbol: "DJI",
-            },
-            nasdaq: {
-              value: data.nasdaq?.last || 0,
-              change: data.nasdaq?.changePercent || 0,
-              symbol: "COMP",
-            },
-            lastUpdate: now,
-          };
-
-          // Calculate Force Field Confidence (0-100%)
-          // Based on: data freshness, market stability, and connection quality
-          const dataFreshness = 100; // Fresh data just received
-          const marketVolatility = Math.abs(newData.dow.change) + Math.abs(newData.nasdaq.change);
-          const stabilityScore = Math.max(0, 100 - marketVolatility * 10); // Lower volatility = higher confidence
-          const connectionScore = retryAttempt === 0 ? 100 : Math.max(0, 100 - retryAttempt * 10);
-
-          const confidence = Math.round(
-            dataFreshness * 0.4 + stabilityScore * 0.4 + connectionScore * 0.2
-          );
-          setForceFieldConfidence(Math.min(100, Math.max(0, confidence)));
-
-          // Use throttled update to prevent logo animation interruptions
-          throttledSetMarketData(newData);
-
-          // Mark as connected and loading complete
-          setSseConnected(true);
-          setIsMarketDataLoading(false);
-          setSseRetryCount(0); // Reset retry count on success
-
-          // Cache the data in localStorage (immediate, not throttled)
-          try {
-            localStorage.setItem(
-              "paiid-market-data",
-              JSON.stringify({
-                data: newData,
-                timestamp: Date.now(),
-              })
-            );
-          } catch (error) {
-            logger.error("[useMarketData] Failed to cache market data", error);
-          }
-        });
-
-        eventSource.addEventListener("heartbeat", (e) => {
-          let data;
-          try {
-            data = JSON.parse(e.data);
-          } catch (error) {
-            logger.error("[useMarketData] Failed to parse SSE heartbeat data", { error, raw: e.data });
-            return; // Skip malformed heartbeat
-          }
-          logger.debug("[useMarketData] SSE heartbeat received", { timestamp: data.timestamp });
-        });
-
-        eventSource.addEventListener("error", (e) => {
-          logger.error("[useMarketData] SSE connection error", e);
-          setSseConnected(false);
-
-          if (eventSource) {
-            eventSource.close();
-            eventSource = null;
-          }
-
-          // Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s (max ~2min)
-          const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
-          logger.warn(
-            `[useMarketData] SSE disconnected. Retrying in ${delay / 1000}s... (attempt ${retryAttempt + 1}/${maxRetries})`
-          );
-
-          reconnectTimeout = setTimeout(() => {
-            connectSSE(retryAttempt + 1);
-          }, delay);
-        });
-
-        eventSource.addEventListener("open", () => {
-          logger.info("[useMarketData] SSE connection established");
-          setSseConnected(true);
-        });
-      } catch (error) {
-        logger.error("[useMarketData] Failed to create EventSource", error);
-        setSseConnected(false);
-
-        // Retry with exponential backoff
-        const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 128000);
-        reconnectTimeout = setTimeout(() => {
-          connectSSE(retryAttempt + 1);
-        }, delay);
-      }
-    };
-
-    // Initialize
-    loadCachedData();
-    connectSSE(0);
-
-    // Cleanup: close SSE connection on unmount
-    return () => {
-      isUnmounted = true;
-      logger.info("[useMarketData] Closing SSE connection");
-
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-
-      if (eventSource) {
-        eventSource.close();
-      }
-    };
-  }, [throttledSetMarketData]);
+    // Refresh trending every 5 minutes
+    const interval = setInterval(refreshTrending, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [refreshTrending]);
 
   return {
-    marketData,
-    forceFieldConfidence,
-    isMarketDataLoading,
-    sseConnected,
-    sseRetryCount,
-    marketStatus,
-    setMarketStatus,
+    tokens,
+    trending,
+    isLoading,
+    error,
+    refreshTokens,
+    refreshTrending,
+    searchTokens,
+  };
+}
+
+/**
+ * Hook for single token data
+ */
+export function useToken(tokenId: string) {
+  const [token, setToken] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!tokenId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await coinGecko.getTokenDetails(tokenId);
+      setToken(data);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setError(error);
+      console.error(`Failed to fetch token ${tokenId}:`, error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tokenId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return {
+    token,
+    isLoading,
+    error,
+    refresh,
+  };
+}
+
+/**
+ * Hook for token price with live updates
+ */
+export function useTokenPrice(tokenId: string, refreshInterval = 10000) {
+  const [price, setPrice] = useState<number | null>(null);
+  const [change24h, setChange24h] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      if (!tokenId) return;
+
+      setIsLoading(true);
+
+      try {
+        const data = await coinGecko.getSimplePrice([tokenId], ["usd"], true);
+        if (data[tokenId]) {
+          setPrice(data[tokenId].usd);
+          setChange24h(data[tokenId].usd_24h_change);
+        }
+      } catch (err) {
+        console.error(`Failed to fetch price for ${tokenId}:`, err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPrice();
+
+    // Auto-refresh at interval
+    const interval = setInterval(fetchPrice, refreshInterval);
+    return () => clearInterval(interval);
+  }, [tokenId, refreshInterval]);
+
+  return {
+    price,
+    change24h,
+    isLoading,
   };
 }

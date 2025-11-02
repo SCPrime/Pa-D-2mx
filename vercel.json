@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "framework": "nextjs",
+  "installCommand": "cd frontend && npm install",
+  "outputDirectory": "frontend/.next",
+  "env": {
+    "NEXT_PUBLIC_DEX_BACKEND_URL": "https://paiid-2mx-backend.onrender.com",
+    "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID": "",
+    "NEXT_PUBLIC_ENVIRONMENT": "testnet"
+  }
+}
+

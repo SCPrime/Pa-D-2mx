@@ -20,9 +20,12 @@ const nextConfig = {
 
   // Optimize bundle size
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn']
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? {
+            exclude: ["error", "warn"],
+          }
+        : false,
   },
 
   // Production optimizations
@@ -39,18 +42,26 @@ const nextConfig = {
 
   // Webpack optimizations
   webpack: (config, { isServer, webpack }) => {
+    // Ignore React Native dependencies for MetaMask SDK (browser only)
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        "@react-native-async-storage/async-storage": false,
+        "react-native": false,
+        "react-native-randombytes": false,
+      };
+    }
+
     // Tree shaking for moment.js locale files (if used)
-    config.plugins.push(
-      new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en/)
-    );
+    config.plugins.push(new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en/));
 
     // Analyze bundle in production builds
-    if (!isServer && process.env.ANALYZE === 'true') {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+    if (!isServer && process.env.ANALYZE === "true") {
+      const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
       config.plugins.push(
         new BundleAnalyzerPlugin({
-          analyzerMode: 'static',
-          reportFilename: './analyze.html',
+          analyzerMode: "static",
+          reportFilename: "./analyze.html",
           openAnalyzer: true,
         })
       );
@@ -59,44 +70,44 @@ const nextConfig = {
     // Optimize chunks
     if (!isServer) {
       config.optimization.splitChunks = {
-        chunks: 'all',
+        chunks: "all",
         cacheGroups: {
           default: false,
           vendors: false,
           // Vendor chunk
           vendor: {
-            name: 'vendor',
-            chunks: 'all',
+            name: "vendor",
+            chunks: "all",
             test: /node_modules/,
-            priority: 20
+            priority: 20,
           },
           // D3.js separate chunk (large library)
           d3: {
-            name: 'd3',
+            name: "d3",
             test: /[\\/]node_modules[\\/]d3/,
-            priority: 30
+            priority: 30,
           },
           // Chart libraries separate chunk
           charts: {
-            name: 'charts',
+            name: "charts",
             test: /[\\/]node_modules[\\/](chart\.js|react-chartjs-2|recharts|lightweight-charts)/,
-            priority: 30
+            priority: 30,
           },
           // Anthropic SDK separate chunk
           anthropic: {
-            name: 'anthropic',
+            name: "anthropic",
             test: /[\\/]node_modules[\\/]@anthropic-ai/,
-            priority: 30
+            priority: 30,
           },
           // Common components
           common: {
-            name: 'common',
+            name: "common",
             minChunks: 2,
             priority: 10,
             reuseExistingChunk: true,
-            enforce: true
-          }
-        }
+            enforce: true,
+          },
+        },
       };
     }
 
@@ -106,7 +117,7 @@ const nextConfig = {
   // Experimental features
   experimental: {
     // optimizeCss: true, // Requires critters package - disabled for now
-    optimizePackageImports: ['d3', '@anthropic-ai/sdk', 'lodash', 'date-fns']
+    optimizePackageImports: ["d3", "@anthropic-ai/sdk", "lodash", "date-fns"],
   },
 
   async headers() {

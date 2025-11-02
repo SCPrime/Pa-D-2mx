@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import SocialLoginButtons from "./SocialLoginButtons";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -151,6 +152,9 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
       >
         {isLoading ? "Logging in..." : "Login"}
       </button>
+
+      {/* Social Login Buttons */}
+      <SocialLoginButtons />
 
       <div style={{ textAlign: "center", fontSize: "14px", color: "#94a3b8" }}>
         Don&apos;t have an account?{" "}
