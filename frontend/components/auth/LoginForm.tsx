@@ -2,11 +2,14 @@
  * Login Form Component
  *
  * Email/password login with validation and error handling.
+ * Now includes Google & Apple Sign-In for commercial parity.
+ * Plus forgot password flow!
  */
 
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import SocialLoginButtons from "./SocialLoginButtons";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -19,6 +22,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +46,18 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
       setIsLoading(false);
     }
   };
+
+  // Show forgot password form if requested
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordForm
+        onSuccess={() => {
+          setShowForgotPassword(false);
+        }}
+        onBackToLogin={() => setShowForgotPassword(false)}
+      />
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -115,6 +131,23 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
           onFocus={(e) => (e.target.style.borderColor = "rgba(16, 185, 129, 0.6)")}
           onBlur={(e) => (e.target.style.borderColor = "rgba(16, 185, 129, 0.3)")}
         />
+        <div style={{ textAlign: "right", marginTop: "4px" }}>
+          <button
+            type="button"
+            onClick={() => setShowForgotPassword(true)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#10b981",
+              cursor: "pointer",
+              fontSize: "13px",
+              textDecoration: "underline",
+              padding: 0,
+            }}
+          >
+            Forgot Password?
+          </button>
+        </div>
       </div>
 
       {error && (
