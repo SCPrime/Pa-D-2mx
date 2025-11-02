@@ -189,16 +189,40 @@ async def login(
     - 401: Invalid email or password
     - 403: Account disabled
     """
-    # Find user by email
-    user = db.query(User).filter(User.email == credentials.email).first()
+    # DEVELOPMENT: Hardcoded test user (SCPRIME/SCPRIME)
+    # Accept username "SCPRIME" and convert to email format
+    email_to_check = credentials.email
+    if credentials.email.upper() == "SCPRIME" and credentials.password == "SCPRIME":
+        email_to_check = "scprime@paiid.local"
+        logger.info("🔑 Test user login detected: SCPRIME (PaiiD-2mx)")
+        
+        # Create test user if doesn't exist
+        user = db.query(User).filter(User.email == email_to_check).first()
+        if not user:
+            logger.info("🆕 Creating test user: SCPRIME (PaiiD-2mx)")
+            password_hash = hash_password("SCPRIME")
+            user = User(
+                email=email_to_check,
+                password_hash=password_hash,
+                full_name="Dr. SC Prime",
+                role="owner",
+                is_active=True,
+                preferences={"risk_tolerance": 50, "test_user": True},
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+    else:
+        # Find user by email
+        user = db.query(User).filter(User.email == email_to_check).first()
 
-    if not user or not verify_password(credentials.password, user.password_hash):
-        # Log failed attempt
-        logger.warning(f"⚠️ Failed login attempt for: {credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
+        if not user or not verify_password(credentials.password, user.password_hash):
+            # Log failed attempt
+            logger.warning(f"⚠️ Failed login attempt for: {credentials.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
 
     # Check if user is active
     if not user.is_active:

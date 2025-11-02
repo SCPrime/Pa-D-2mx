@@ -9,7 +9,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import LoginForm from "../components/auth/LoginForm";
+import ThemedLoginPage from "../components/auth/ThemedLoginPage";
 import { WalletButton } from "../components/wallet/WalletButton";
 import { useAuth } from "../hooks/useAuth";
 import { logger } from "../lib/logger";
@@ -48,21 +48,11 @@ export default function Home() {
   // === LOGIN ENFORCEMENT - SHOW LOGIN PAGE IF NOT AUTHENTICATED ===
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Welcome to PaiiD 2MX</h1>
-            <p className="text-slate-400">DEX Trading Platform</p>
-          </div>
-          <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-8 shadow-2xl">
-            <LoginForm
-              onSuccess={() => {
-                logger.info("[PaiiD-2mx] User logged in successfully");
-              }}
-            />
-          </div>
-        </div>
-      </div>
+      <ThemedLoginPage
+        onSuccess={() => {
+          logger.info("[PaiiD-2mx] User logged in successfully");
+        }}
+      />
     );
   }
 

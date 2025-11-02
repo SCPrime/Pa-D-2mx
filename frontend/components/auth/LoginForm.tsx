@@ -25,13 +25,15 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
     setError("");
 
     if (!email || !password) {
-      setError("Please enter email and password");
+      setError("Please enter username/email and password");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      // Accept username format for test users (SCPRIME)
+      // Backend will handle conversion
       await login(email, password);
       onSuccess?.();
     } catch (err) {
@@ -54,14 +56,14 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
             fontWeight: 500,
           }}
         >
-          Email
+          Username/Email
         </label>
         <input
           id="login-email"
-          type="email"
+          type="text"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="your@email.com"
+          placeholder="username or email"
           disabled={isLoading}
           style={{
             width: "100%",
