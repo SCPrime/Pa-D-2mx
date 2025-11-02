@@ -23,19 +23,21 @@ services:
       - key: BASE_RPC_URL
         value: https://goerli.base.org
       - key: ALLOWED_ORIGINS
-        value: http://localhost:3000,https://paiid-2mx.vercel.app
+        value: http://localhost:3000,https://paiid-2mx-frontend.onrender.com
       # Optional: Add ONEINCH_API_KEY from dashboard if you have one
       # - key: ONEINCH_API_KEY
       #   sync: false
 
-  # Frontend (Next.js) - Can also deploy to Render instead of Vercel
-  # - type: web
-  #   name: paiid-2mx-frontend
-  #   env: node
-  #   region: oregon
-  #   plan: free
-  #   buildCommand: cd frontend && npm install && npm run build
-  #   startCommand: cd frontend && npm start
-  #   envVars:
-  #     - key: NEXT_PUBLIC_DEX_BACKEND_URL
-  #       value: https://paiid-2mx-backend.onrender.com
+  # Frontend (Next.js) - Deployed to Render
+  - type: web
+    name: paiid-2mx-frontend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_DEX_BACKEND_URL
+        value: https://paiid-2mx-backend.onrender.com
+      - key: NEXT_PUBLIC_ENVIRONMENT
+        value: testnet
