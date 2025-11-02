@@ -1,188 +1,83 @@
 /**
  * Trading Mode Indicator
- * Prominent indicator showing paper/live trading mode with safety warnings
+ * 
+ * Displays current trading mode (PAPER or LIVE) in header.
+ * Shows visual indicator and tooltip for user awareness.
  */
 
-import { AlertTriangle, Shield, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Circle } from "lucide-react";
 
-interface TradingModeIndicatorProps {
-  mode?: "paper" | "live";
-  onModeChange?: (mode: "paper" | "live") => void;
-  className?: string;
-}
+export default function TradingModeIndicator() {
+  const [mode, setMode] = useState<"paper" | "live" | "unknown">("unknown");
+  const [showTooltip, setShowTooltip] = useState(false);
 
-export default function TradingModeIndicator({
-  mode = "paper",
-  onModeChange,
-  className = "",
-}: TradingModeIndicatorProps) {
-  const [isChanging, setIsChanging] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
-
-  // Get mode from localStorage if not provided
   useEffect(() => {
-    const savedMode = localStorage.getItem("trading-mode") as "paper" | "live" | null;
-    if (savedMode && onModeChange) {
-      onModeChange(savedMode);
-    }
-  }, [onModeChange]);
+    // Check trading mode from environment or backend
+    // For now, we'll default to paper mode (safe default)
+    const liveTrading = process.env.NEXT_PUBLIC_LIVE_TRADING === "true";
+    setMode(liveTrading ? "live" : "paper");
+  }, []);
 
-  const handleModeChange = async (newMode: "paper" | "live") => {
-    if (newMode === "live") {
-      setShowWarning(true);
-      return;
-    }
-
-    setIsChanging(true);
-
-    // Save to localStorage
-    localStorage.setItem("trading-mode", newMode);
-
-    // Call parent handler
-    if (onModeChange) {
-      onModeChange(newMode);
-    }
-
-    // Reset state
-    setTimeout(() => {
-      setIsChanging(false);
-    }, 1000);
-  };
-
-  const confirmLiveMode = () => {
-    setShowWarning(false);
-    handleModeChange("live");
-  };
-
-  const cancelLiveMode = () => {
-    setShowWarning(false);
-  };
+  if (mode === "unknown") {
+    return null;
+  }
 
   const isLive = mode === "live";
 
   return (
-    <>
-      {/* Main Indicator */}
-      <div className={`relative ${className}`}>
-        <div
-          className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm
-            transition-all duration-300 cursor-pointer
-            ${
-              isLive
-                ? "bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
-                : "bg-green-100 text-green-800 border-2 border-green-300 hover:bg-green-200"
-            }
-            ${isChanging ? "opacity-50 pointer-events-none" : ""}
-          `}
-          onClick={() => handleModeChange(isLive ? "paper" : "live")}
-          style={{
-            backdropFilter: "blur(10px)",
-            boxShadow: isLive
-              ? "0 4px 12px rgba(239, 68, 68, 0.2)"
-              : "0 4px 12px rgba(34, 197, 94, 0.2)",
-          }}
+    <div className="relative">
+      <button
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all ${
+          isLive
+            ? "bg-red-900/30 border-red-600 hover:bg-red-900/50"
+            : "bg-blue-900/30 border-blue-600 hover:bg-blue-900/50"
+        }`}
+      >
+        <Circle
+          className={`w-2.5 h-2.5 ${isLive ? "text-red-500 fill-red-500 animate-pulse" : "text-blue-500 fill-blue-500"}`}
+        />
+        <span
+          className={`text-xs font-bold uppercase tracking-wide ${
+            isLive ? "text-red-400" : "text-blue-400"
+          }`}
         >
-          {isLive ? (
-            <>
-              <Zap className="w-4 h-4" />
-              <span>LIVE TRADING</span>
-              <AlertTriangle className="w-4 h-4" />
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4" />
-              <span>PAPER TRADING</span>
-            </>
-          )}
+          {isLive ? "LIVE" : "PAPER"}
+        </span>
+      </button>
 
-          {isChanging && (
-            <div className="ml-2">
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-
-        {/* Mode Description */}
-        <div className="mt-1 text-xs text-gray-600">
-          {isLive ? (
-            <span className="text-red-600 font-medium">
-              ⚠️ Real money at risk - trades will execute
-            </span>
-          ) : (
-            <span className="text-green-600">✅ Safe practice mode - no real money</span>
-          )}
-        </div>
-      </div>
-
-      {/* Live Mode Warning Modal */}
-      {showWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md mx-4 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Switch to Live Trading?</h3>
-                <p className="text-sm text-gray-600">This will use real money</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="text-red-500 mt-0.5">•</span>
-                <span>All trades will execute with real money</span>
-              </div>
-              <div className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="text-red-500 mt-0.5">•</span>
-                <span>You can lose money on trades</span>
-              </div>
-              <div className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="text-red-500 mt-0.5">•</span>
-                <span>Make sure you understand the risks</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={confirmLiveMode}
-                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors"
-              >
-                Yes, Go Live
-              </button>
-              <button
-                onClick={cancelLiveMode}
-                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Stay Safe
-              </button>
-            </div>
+      {/* Tooltip */}
+      {showTooltip && (
+        <div className="absolute top-full mt-2 right-0 w-64 p-3 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50">
+          <div className="text-xs space-y-2">
+            {isLive ? (
+              <>
+                <p className="text-red-400 font-bold">🔴 LIVE TRADING MODE</p>
+                <p className="text-slate-300">
+                  All orders use <strong>real money</strong> from your brokerage account. Losses
+                  are real and cannot be reversed.
+                </p>
+                <p className="text-slate-400 text-[10px]">
+                  Use the Emergency Halt in Settings to stop all trading immediately if needed.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-blue-400 font-bold">📝 PAPER TRADING MODE</p>
+                <p className="text-slate-300">
+                  All orders are <strong>simulated</strong>. No real money is used. Perfect for
+                  testing strategies risk-free.
+                </p>
+                <p className="text-slate-400 text-[10px]">
+                  To enable live trading, contact your administrator.
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
-    </>
-  );
-}
-
-// Compact version for headers/toolbars
-export function CompactTradingModeIndicator({
-  mode = "paper",
-  onModeChange: _onModeChange,
-  className = "",
-}: TradingModeIndicatorProps) {
-  const isLive = mode === "live";
-
-  return (
-    <div className={`flex items-center gap-1 ${className}`}>
-      <div
-        className={`
-          w-3 h-3 rounded-full
-          ${isLive ? "bg-red-500" : "bg-green-500"}
-        `}
-      />
-      <span className="text-xs font-medium text-gray-600">{isLive ? "LIVE" : "PAPER"}</span>
     </div>
   );
 }
