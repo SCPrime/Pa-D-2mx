@@ -21,15 +21,15 @@ export default function Home() {
 
   // Show loading during auth check
   if (authLoading) {
-    return (
+          return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-slate-400 text-lg">Loading PaiiD 2MX...</p>
+            </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
   // === LOGIN ENFORCEMENT - SHOW LOGIN PAGE IF NOT AUTHENTICATED ===
   if (!user) {
@@ -39,15 +39,15 @@ export default function Home() {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">Welcome to PaiiD 2MX</h1>
             <p className="text-slate-400">DEX Trading Platform</p>
-          </div>
+      </div>
           <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-8 shadow-2xl">
             <LoginForm
               onSuccess={() => {
                 logger.info("[PaiiD-2mx] User logged in successfully");
               }}
-            />
+              />
+            </div>
           </div>
-        </div>
       </div>
     );
   }
@@ -61,10 +61,10 @@ export default function Home() {
             <h1 className="text-2xl font-bold text-white">PaiiD 2MX</h1>
             <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-semibold rounded-full border border-blue-500/30">
               DEX Platform
-            </span>
-          </div>
+                </span>
+              </div>
           <WalletButton />
-        </div>
+            </div>
       </header>
 
       {/* Hero Section */}
@@ -77,9 +77,9 @@ export default function Home() {
           {!isConnected && (
             <div className="flex justify-center">
               <WalletButton />
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
 
         {/* Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
@@ -92,7 +92,7 @@ export default function Home() {
                 Polygon, BSC, and Base.
               </p>
               <div className="text-blue-400 text-sm font-semibold">Try Demo →</div>
-            </div>
+          </div>
           </Link>
 
           <Link href="/dex-demo">
@@ -118,12 +118,12 @@ export default function Home() {
               <div className="text-blue-400 text-sm font-semibold">Try Demo →</div>
             </div>
           </Link>
-        </div>
+            </div>
 
         {/* Trending Tokens */}
         <div className="max-w-2xl mx-auto">
           <TrendingTokens />
-        </div>
+              </div>
       </section>
 
       {/* Features List */}
@@ -138,7 +138,7 @@ export default function Home() {
               <li>✅ Slippage protection built-in</li>
               <li>✅ Enterprise security guidelines</li>
             </ul>
-          </div>
+            </div>
 
           <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-6">
             <h3 className="text-xl font-semibold text-white mb-4">💰 Zero Cost</h3>
