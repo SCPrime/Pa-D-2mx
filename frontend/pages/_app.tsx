@@ -124,7 +124,7 @@ function AppContent({
     <TelemetryProvider userId={userId} userRole={userRole} enabled={telemetryEnabled}>
       {/* Persistent Navigation Layout */}
       {showLayout && <Header />}
-      
+
       {/* Main Content */}
       <div className={showLayout ? "flex flex-col min-h-screen" : ""}>
         <main className={showLayout ? "flex-1" : ""}>
@@ -132,7 +132,7 @@ function AppContent({
         </main>
         {showLayout && <Footer />}
       </div>
-      
+
       <AIChatBot isOpen={isChatOpen} onClose={closeChat} />
 
       {/* Storyboard Canvas */}

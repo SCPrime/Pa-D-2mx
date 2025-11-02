@@ -118,7 +118,7 @@ export function useDEX(): UseDEXReturn {
    * Execute a swap (placeholder - requires transaction building)
    */
   const executeSwap = useCallback(
-    async (params: {
+    async (_params: {
       tokenIn: string;
       tokenOut: string;
       amountIn: string;

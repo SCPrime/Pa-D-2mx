@@ -25,7 +25,7 @@ interface KYCFormData {
 }
 
 export default function KYCForm() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [formData, setFormData] = useState<KYCFormData>({
     full_name: "",
     phone_number: "",

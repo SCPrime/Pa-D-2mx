@@ -34,13 +34,13 @@ export function SwapInterface() {
   const [tokenIn, setTokenIn] = useState<Token>(EXAMPLE_TOKENS[0]);
   const [tokenOut, setTokenOut] = useState<Token>(EXAMPLE_TOKENS[1]);
   const [amount, setAmount] = useState("");
-  
+
   // DEX SAFETY FEATURES - Critical for launch! 🛡️
   const [slippage, setSlippage] = useState<number>(0.5); // Default 0.5%
   const [showSlippageSettings, setShowSlippageSettings] = useState(false);
   const [gasPrice, setGasPrice] = useState<"slow" | "normal" | "fast">("normal");
   const [customSlippage, setCustomSlippage] = useState("");
-  
+
   // Calculate mock price impact (in production, get from 1inch API)
   const estimatedPriceImpact = amount ? Math.min(parseFloat(amount) * 0.05, 2.5) : 0; // Mock: 0.05% per ETH, max 2.5%
 
@@ -48,7 +48,7 @@ export function SwapInterface() {
     setTokenIn(tokenOut);
     setTokenOut(tokenIn);
   };
-  
+
   const slippagePresets = [0.1, 0.5, 1.0];
 
   if (!isConnected) {
@@ -70,9 +70,24 @@ export function SwapInterface() {
             className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
             title="Swap Settings"
           >
-            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-5 h-5 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           </button>
         </div>
@@ -116,7 +131,9 @@ export function SwapInterface() {
               <span className="flex items-center text-slate-400 text-sm">%</span>
             </div>
             {slippage > 5 && (
-              <p className="mt-2 text-xs text-yellow-400">⚠️ High slippage may result in unfavorable trade</p>
+              <p className="mt-2 text-xs text-yellow-400">
+                ⚠️ High slippage may result in unfavorable trade
+              </p>
             )}
           </div>
 
@@ -139,7 +156,9 @@ export function SwapInterface() {
               ))}
             </div>
             <div className="mt-2 flex justify-between text-xs text-slate-400">
-              <span>Est. Gas: {gasPrice === "slow" ? "~$2" : gasPrice === "normal" ? "~$4" : "~$8"}</span>
+              <span>
+                Est. Gas: {gasPrice === "slow" ? "~$2" : gasPrice === "normal" ? "~$4" : "~$8"}
+              </span>
               <span>{gasPrice === "slow" ? "~30s" : gasPrice === "normal" ? "~15s" : "~10s"}</span>
             </div>
           </div>
@@ -229,14 +248,14 @@ export function SwapInterface() {
                   <div>
                     <p className="text-red-400 font-semibold text-sm">High Price Impact!</p>
                     <p className="text-red-300 text-xs mt-1">
-                      Price impact of {estimatedPriceImpact.toFixed(2)}% may result in significant loss. 
-                      Consider splitting into smaller trades.
+                      Price impact of {estimatedPriceImpact.toFixed(2)}% may result in significant
+                      loss. Consider splitting into smaller trades.
                     </p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <div className="p-3 bg-slate-900/30 rounded-lg space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Est. Rate</span>
@@ -246,13 +265,13 @@ export function SwapInterface() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Price Impact</span>
-                <span 
+                <span
                   className={
-                    estimatedPriceImpact > 5 
-                      ? "text-red-400 font-semibold" 
-                      : estimatedPriceImpact > 2 
-                      ? "text-yellow-400" 
-                      : "text-green-400"
+                    estimatedPriceImpact > 5
+                      ? "text-red-400 font-semibold"
+                      : estimatedPriceImpact > 2
+                        ? "text-yellow-400"
+                        : "text-green-400"
                   }
                 >
                   {estimatedPriceImpact > 0.01 ? estimatedPriceImpact.toFixed(2) : "< 0.01"}%
@@ -265,7 +284,11 @@ export function SwapInterface() {
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Est. Gas</span>
                 <span className="text-slate-300">
-                  {gasPrice === "slow" ? "~$2 (30s)" : gasPrice === "normal" ? "~$4 (15s)" : "~$8 (10s)"}
+                  {gasPrice === "slow"
+                    ? "~$2 (30s)"
+                    : gasPrice === "normal"
+                      ? "~$4 (15s)"
+                      : "~$8 (10s)"}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
