@@ -26,13 +26,10 @@ test.describe('PaiiD Login Flow', () => {
 
     // Check for themed elements
     // Note: CompletePaiiDLogo is an SVG, so we look for the container
-    const pageContent = await page.content();
+    // (pageContent available if needed for debugging)
 
-    // Verify dark background (should have gradient styles)
-    const bodyBg = await page.evaluate(() => {
-      const body = document.querySelector('body');
-      return body ? window.getComputedStyle(body).background : '';
-    });
+    // Verify dark background is applied
+    // (bodyBg available if needed for specific background checks)
 
     console.log('✅ Page loaded, checking theme...');
 

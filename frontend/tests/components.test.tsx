@@ -36,14 +36,8 @@ describe('Component Tests', () => {
   });
 
   test('TradingModeIndicator shows correct mode', () => {
-    const mockOnModeChange = jest.fn();
-    
-    render(
-      <TradingModeIndicator 
-        mode="paper" 
-        onModeChange={mockOnModeChange} 
-      />
-    );
+    // TradingModeIndicator is self-contained, no props needed
+    render(<TradingModeIndicator />);
     
     expect(screen.getByText(/PAPER TRADING/i)).toBeInTheDocument();
   });

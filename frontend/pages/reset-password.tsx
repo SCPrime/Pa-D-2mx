@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
         throw new Error(data.detail || "Failed to reset password");
       }
 
-      const data = await response.json();
+      // Success - no need to parse response body
       logger.info("[ResetPassword] Password reset successful");
 
       setSuccess(true);
